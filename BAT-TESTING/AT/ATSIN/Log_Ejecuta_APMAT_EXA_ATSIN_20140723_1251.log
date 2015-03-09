@@ -1,0 +1,22 @@
+
+SQL*Plus: Release 11.2.0.1.0 Production on Mié Jul 23 12:51:02 2014
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+
+Conectado a:
+Oracle Database 11g Enterprise Edition Release 11.2.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+SQL> 
+SQL> 
+SQL> @'(001)[AT.SIS] GLB RM Grant a Sis_Procesos.sql';
+SP2-0310: no se ha podido abrir el archivo "(001)[AT.SIS] GLB RM Grant a Sis_Procesos.sql"
+SQL> 
+SQL> 
+SQL> 
+SQL> exit;
+Desconectado de Oracle Database 11g Enterprise Edition Release 11.2.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options

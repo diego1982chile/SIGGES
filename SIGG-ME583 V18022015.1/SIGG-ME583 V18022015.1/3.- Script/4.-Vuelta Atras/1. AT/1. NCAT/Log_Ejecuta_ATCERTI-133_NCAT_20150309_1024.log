@@ -1,0 +1,23 @@
+
+SQL*Plus: Release 11.2.0.1.0 Production on Lun Mar 9 10:24:28 2015
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+
+Conectado a:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> 
+SQL> @'quitar_ncatprograma_no_auge.sql';
+SQL> begin
+  2  	     NCAT.NCAT_PCK_UNION.QUITARNCATPROGRAMA('NO AUGE');
+  3  end;
+  4  /
+
+Procedimiento PL/SQL terminado correctamente.
+
+SQL> 
+SQL> exit;
+Desconectado de Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
