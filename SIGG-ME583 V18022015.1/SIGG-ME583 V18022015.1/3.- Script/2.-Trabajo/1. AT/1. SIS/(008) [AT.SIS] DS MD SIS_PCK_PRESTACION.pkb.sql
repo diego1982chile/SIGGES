@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_PRESTACION AS
                  loop
                     v_pk := c1.pk;
                     exit; -- only care about one record, so exit.
-                end loop;
+                end loop;             
         when 'genero' then
             /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
                 for c1 in ( select g.GENERO_COD_GENERO pk
@@ -116,6 +116,17 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_PRESTACION AS
                     v_pk := c1.pk;
                     exit; -- only care about one record, so exit.
                 end loop;
+        when 'prestacion_famramapres_auge' then
+                for c1 in ( select p.PRESTACION_COD_PRESTACION pk from sis_tab_prestacion p left outer join sis_tab_famramapres frp
+                on p.PRESTACION_COD_PRESTACION=frp.PRESTACION_COD_PRESTACION
+                where trim(p.PRESTACION_DSC_CODUSUA)=trim(clave)
+                and p.PRESTACION_FEC_VIGE=fecha
+                and frp.FAMRAMAPRES_COD_FAMRAMAPRES is null
+                order by p.prestacion_FEC_VIGE desc )
+                loop
+                    v_pk := c1.pk;
+                    exit; -- only care about one record, so exit.
+                end loop;                
          when 'rama_famrama' then
                 for c1 in ( select RAMA.RAMA_COD_RAMA pk from sis_tab_rama rama inner join sis_tab_famrama famrama
                 on RAMA.RAMA_COD_RAMA=FAMRAMA.RAMA_COD_RAMA
@@ -243,7 +254,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_PRESTACION AS
     case tabla
         when 'familia' then
             /* Seleccionar la familia, usando como clave de búsqueda la pk de la famrama */
-              for c1 in ( select trim(familia.FAMILIA_DSC_FAMILIA) glosa
+              for c1 in ( select upper(trim(familia.FAMILIA_DSC_FAMILIA)) glosa
                           from NCAT.NCAT_TAB_FAMILIA familia
                           where FAMILIA.FAMILIA_COD_FAMILIA= clave )
                 loop
@@ -252,9 +263,9 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_PRESTACION AS
                 end loop;
         when 'probsalud' then
             /* Seleccionar la familia, usando como clave de búsqueda la pk de la famrama */
-              for c1 in ( select trim(ps.PROBLSALUD_DSC_NOMBRE) glosa
+              for c1 in ( select upper(trim(ps.PROBLSALUD_DSC_NOMBRE)) glosa
                           from SIS.SIS_TAB_PROBLSALUD ps
-                          where ps.PROBLSALUD_COD_PROBLSALUD = clave )
+                          where ps.PROBLSALUD_COD_PROBLSALUD=clave )
                 loop
                     v_glosa := c1.glosa;
                     exit; -- only care about one record, so exit.
@@ -298,8 +309,8 @@ BEGIN
     end if;
 
     Sis.Sis_Pro_Log (v_nomproc, 1, 0, '.',  v_dsc_log, out_error);
-    
-        --Chequear que la tabla inputbuffer tenga data
+
+    --Chequear que la tabla inputbuffer tenga data
     SELECT 1 into v_data  FROM sis.inputbuffer WHERE ROWNUM=1;
 
     /* Resetear secuencias involucradas en la transacción */
@@ -308,10 +319,15 @@ BEGIN
     SIS_PCK_HELPER.RESETSEQ('SIS_TAB_FAMRAMA','SIS_SEQ_FAMRAMA');
     SIS_PCK_HELPER.RESETSEQ('SIS_TAB_PRESTACION','SIS_SEQ_PRESTACION');
     SIS_PCK_HELPER.RESETSEQ('SIS_TAB_FAMRAMAPRES','SIS_SEQ_FAMRAMAPRES');
+    
+    if(auge) then
+        /* Resetear secuencias involucradas en la transacción */
+        SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_FAMILIA','NCAT.NCAT_SEQ_FAMILIA_AUGE');
+    end if;
 
-     for c in ( select IB.PROBLSALUD probsalud, IB.RAMA rama, IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion from SIS.INPUTBUFFER ib order by IB.ID )
+     for c in ( select IB.PROBLSALUD probsalud, ib.cod_ps_gen cod_ps_gen, ib.COD_PS cod_ps, ib.COD_PS_AUX cod_ps_aux, IB.RAMA rama, ib.COD_RAMA cod_rama, IB.FAMRAMA famrama, 
+                IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion from SIS.INPUTBUFFER ib order by IB.ID )
         loop
-            --DBMS_OUTPUT.PUT_LINE('c1.pk= '||c1.pk);
             if(c.probsalud is null) then
                 raise probsalud_nulo;
             end if;
@@ -323,7 +339,7 @@ BEGIN
             end if;
 
             if(auge) then
-                AgregarPrestacionAuge(c.probsalud, c.rama, c.famrama, c.cod_familia, c.prestacion);
+                AgregarPrestacionAuge(c.probsalud, c.cod_ps_gen, c.cod_ps, c.cod_ps_aux ,c.cod_rama, c.famrama, c.cod_familia, c.prestacion);
             else
                 AgregarPrestacionNoAuge(c.probsalud, c.rama, c.famrama, c.prestacion);
             end if;
@@ -332,9 +348,9 @@ BEGIN
         -- Vaciar la tabla inputbuffer
         delete from sis.inputbuffer;
 
-        SIS_PCK_PRESTACION.v_dsc_log:='Info: Proceso terminado con éxito.';
+        v_dsc_log:='Info: Proceso terminado con éxito.';
 
-        Sis.Sis_Pro_Log (v_nomproc, 1, 0, 'OK', SIS_PCK_PRESTACION.v_dsc_log, SIS_PCK_PRESTACION.out_error);
+        Sis.Sis_Pro_Log (v_nomproc, 1, 0, 'OK', v_dsc_log, out_error);
 
         commit;
 
@@ -369,7 +385,11 @@ BEGIN
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when others then
             rollback;
-            Sis.Sis_Pro_Log (v_nomproc, SIS_PCK_PRESTACION.V_CODLOG, SQLCODE, SQLERRM,  SIS_PCK_PRESTACION.v_dsc_log, SIS_PCK_PRESTACION.out_error);
+            if(v_dsc_log is null or v_codlog is null) then
+                v_dsc_log := 'Error';
+                v_codlog  := -1;
+            end if;
+            Sis.Sis_Pro_Log (v_nomproc, V_CODLOG, SQLCODE, SQLERRM, v_dsc_log, out_error);
 END;
 
 PROCEDURE QuitarPrograma
@@ -401,15 +421,15 @@ BEGIN
         fecha:=TO_DATE(dia||'/'||mes||'/'||anyo,'DD/MM/RRRR');
         v_nomproc:='QuitarProgramaNoAuge';
     end if;
-    
+
     Sis.Sis_Pro_Log (v_nomproc, 1, 0, '.',  v_dsc_log, out_error);
-    
+
     --Chequear que la tabla inputbuffer tenga data
     SELECT 1 into v_data  FROM sis.inputbuffer WHERE ROWNUM=1;
 
-     for c in ( select IB.PROBLSALUD probsalud, IB.RAMA rama, IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion from SIS.INPUTBUFFER ib order by IB.ID )
+     for c in ( select IB.PROBLSALUD probsalud, ib.cod_ps_gen cod_ps_gen, ib.COD_PS cod_ps, ib.COD_PS_AUX cod_ps_aux, IB.RAMA rama, ib.COD_RAMA cod_rama, IB.FAMRAMA famrama, 
+                IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion from SIS.INPUTBUFFER ib order by IB.ID )
         loop
-            --DBMS_OUTPUT.PUT_LINE('c1.pk= '||c1.pk);
             if(c.probsalud is null) then
                 raise probsalud_nulo;
             end if;
@@ -419,9 +439,9 @@ BEGIN
             if(c.prestacion is null) then
                 raise prestacion_nulo;
             end if;
-            --Si es auge, se debe quitar la prestación tantas veces como problsalud con la misma glosa existan
+            
             if(auge) then
-                QuitarPrestacionAuge(c.probsalud, c.rama, c.famrama, c.cod_familia, c.prestacion);
+                QuitarPrestacionAuge(c.probsalud, c.cod_ps_gen, c.cod_ps, c.cod_ps_aux, c.cod_rama, c.famrama, c.cod_familia, c.prestacion);
             else
                 QuitarPrestacionNoAuge(c.probsalud, c.rama, c.famrama, c.prestacion);
             end if;
@@ -434,7 +454,7 @@ BEGIN
         SIS_PCK_HELPER.RESETSEQ('SIS_TAB_PRESTACION','SIS_SEQ_PRESTACION');
         SIS_PCK_HELPER.RESETSEQ('SIS_TAB_FAMRAMAPRES','SIS_SEQ_FAMRAMAPRES');
 
-        if(upper(p_auge)='AUGE') then
+        if(auge) then
             /* Resetear secuencias involucradas en la transacción */
             SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_FAMILIA','NCAT.NCAT_SEQ_FAMILIA_AUGE');
         end if;
@@ -442,8 +462,8 @@ BEGIN
         -- Vaciar la tabla inputbuffer
         delete from sis.inputbuffer;
 
-        SIS_PCK_PRESTACION.v_dsc_log:='Info: Proceso terminado con éxito.';
-        Sis.Sis_Pro_Log (v_nomproc, 1, 0, 'OK', SIS_PCK_PRESTACION.v_dsc_log, SIS_PCK_PRESTACION.out_error);
+        v_dsc_log:='Info: Proceso terminado con éxito.';
+        Sis.Sis_Pro_Log (v_nomproc, 1, 0, 'OK', v_dsc_log, out_error);
 
         commit;
 
@@ -452,33 +472,37 @@ BEGIN
             rollback;
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := -2;
             v_dsc_log := 'Tabla "inputbuffer" vacía. No hay registros a procesar';
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when probsalud_nulo then
             rollback;
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 2000;
             v_dsc_log := 'El parámetro "probsalud" es null. Revisar archivo .csv';
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when famrama_nulo then
             rollback;
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 2001;
             v_dsc_log := 'El parámetro "famrama" es null. Revisar archivo .csv';
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when prestacion_nulo then
             rollback;
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 2002;
             v_dsc_log := 'El parámetro "prestacion" es null. Revisar archivo .csv';
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when others then
             rollback;
-            Sis.Sis_Pro_Log (SIS_PCK_PRESTACION.v_nomproc, SIS_PCK_PRESTACION.V_CODLOG, SQLCODE, SQLERRM,  SIS_PCK_PRESTACION.v_dsc_log, SIS_PCK_PRESTACION.out_error);
+            if(v_dsc_log is null or v_codlog is null) then
+                v_dsc_log := 'Error';
+                v_codlog  := -1;
+            end if;            
+            Sis.Sis_Pro_Log (v_nomproc, V_CODLOG, SQLCODE, SQLERRM, v_dsc_log, out_error);
 END;
 
   PROCEDURE AgregarPrestacionNoAuge(
@@ -557,97 +581,7 @@ END;
         when others then
             v_codora  := SQLCODE;
             v_msgora  := SQLERRM;
-            v_codlog  := 1;
-            v_dsc_log := 'Excepción inesperada';
-            raise;
-end;
-
-PROCEDURE AgregarPrestacionAuge(
-  dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
-  dsc_famrama in varchar2,
-  cod_familia in number,
-  cod_pres in varchar2)
-  IS
-    rama_inexistente exception;
-    famrama_inexistente exception;
-    familia_inexistente exception;
-    familia_inconsistente exception;
-
-    begin
-
-    -- Si es caso auge, se debe obtener la pk del probsalud desde el ambito global
-
-    v_pk_probsalud:=Existe('probsalud',dsc_probsalud);
-
-    if(v_pk_probsalud is null) then
-        /*  TODO: Si no existe el probsalud, crear el nuevo probsalud */
-        select SIS_SEQ_PROBLSALUD.nextval into v_pk_probsalud from dual;
-
-        insert into sis_tab_problsalud (problsalud_cod_problsalud, entregistro_fec_fecha, entregistro_fec_hora, entregistro_cod_usuario, entregistro_fec_ingreso, problsalud_dsc_datos, boo_cod_garantizado,
-                                                    problsalud_dsc_nombre, problsalud_cod_ordennom, boo_cod_casosinrama, boo_cod_casomanual, boo_cod_especial, problsalud_fec_vige, relaps_cod_relaps, decreto_cod_decreto,
-                                                    problsalud_fec_adesplegar)
-        values (v_pk_probsalud, fecha, fecha, 1, fecha, dsc_probsalud, 2, dsc_probsalud, 99.4, 2, 2, 2, fecha, 1, 2, fecha);
-    end if;
-
-   /* buscar la familia en la tabla familia del usuario NCAT, usando como clave el cod_familia */
-     v_pk_familia:=Existe('familia', cod_familia);
-
-     --dbms_output.PUT_LINE('v_pk_familia='||v_pk_familia);
-
-    /* Si no existe la familia, levantamos la excepción */
-    if(v_pk_familia is null) then
-        --dbms_output.PUT_LINE('voy a agregar familia');
-        select ncat.ncat_seq_familia_auge.nextval into v_pk_familia from dual;
-        /* Si no existe la familia, crear la nueva familia */
-        insert into NCAT.NCAT_TAB_FAMILIA(familia_cod_familia, docu_cod_docu, familia_dsc_familia)
-        values (v_pk_familia, cod_docu, dsc_famrama);
-    else
-        -- Si existe una familia para el cod_familia dado, chequear que las glosas coincidan. Si no coinciden, levantar la excepciòn
-        if not(GetGlosa('familia',v_pk_familia)=trim(dsc_famrama)) then
-            raise familia_inconsistente;
-        end if;
-    end if;
-
-    v_pk_pres:=Existe('prestacion',cod_pres);
-
-    if(v_pk_pres is null) then
-        dbms_output.PUT_LINE('voy a agregar prestacion con cod_pres='||cod_pres);
-        /* Si no existe la prestacion, crear la nueva prestacion */
-        select SIS_SEQ_PRESTACION.nextval into v_pk_pres from dual;
-        insert into sis_tab_prestacion(prestacion_cod_prestacion, referencia_cod_referencia, prestacion_dsc_codusua, prestacion_dsc_prestacion, prestacion_fec_vige, prestacion_num_arancel)
-        values (v_pk_pres, null, cod_pres, dsc_famrama, fecha, null);
-    end if;
-
-    exception
-        when rama_inexistente then
-            v_codora  := 0;
-            v_msgora  := 'Excepción';
-            v_codlog  := 1;
-            v_dsc_log := 'rama inexistente para familia de pk '||cod_familia;
-            raise;
-        when famrama_inexistente then
-            v_codora  := 0;
-            v_msgora  := 'Excepción';
-            v_codlog  := 1;
-            v_dsc_log := 'famrama inexistente para familia de pk '||cod_familia;
-            raise;
-        when familia_inexistente then
-            v_codora  := 0;
-            v_msgora  := 'Excepción';
-            v_codlog  := 1;
-            v_dsc_log := 'familia inexistente para familia de pk '||cod_familia;
-            raise;
-        when familia_inconsistente then
-            v_codora  := 0;
-            v_msgora  := 'Excepción';
-            v_codlog  := 1;
-            v_dsc_log := 'Existe la familia de pk '||cod_familia||', sin embargo la glosa no coincide, revisar archivo .csv';
-            raise;
-        when others then
-            v_codora  := SQLCODE;
-            v_msgora  := SQLERRM;
-            v_codlog  := 1;
+            v_codlog  := -1;
             v_dsc_log := 'Excepción inesperada';
             raise;
 end;
@@ -657,7 +591,6 @@ PROCEDURE QuitarPrestacionNoAuge(
   dsc_rama in varchar2,
   dsc_famrama in varchar2,
   cod_pres in varchar2)
-  --OUT_ERROR  OUT NUMBER)
   IS
     v_pk_probsalud number(12);
     v_pk_rama number(12);
@@ -800,19 +733,19 @@ begin
         when probsalud_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1000;
             v_dsc_log := 'probsalud inexistente para glosa '||dsc_probsalud;
             raise;
         when rama_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1001;
             v_dsc_log := 'rama inexistente para glosa '||dsc_rama;
             raise;
         when famrama_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1002;
             v_dsc_log := 'famrama inexistente para glosa '||dsc_famrama;
             raise;
         when familia_inexistente then
@@ -824,33 +757,197 @@ begin
         when prestacion_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1003;
             v_dsc_log := 'prestación inexistente para código '||cod_pres;
             raise;
         when union_existente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1004;
             v_dsc_log := 'union existente para famrama de glosa '||dsc_famrama||' y prestación de código '||cod_pres||'. union de pk='||v_pk_union;
             raise;
         when valoriza_existente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1005;
             v_dsc_log := 'valoriza existente para famrama de glosa '||dsc_famrama||' y prestación de código '||cod_pres||'. valoriza de pk='||v_pk_valoriza;
             raise;
         when others then
             v_codora  := SQLCODE;
             v_msgora  := SQLERRM;
-            v_codlog  := 1;
+            v_codlog  := -1;
             v_dsc_log := 'Excepción inesperada';
             raise;
 end;
 
+PROCEDURE AgregarPrestacionAuge(
+  dsc_probsalud in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,
+  cod_rama in number,
+  dsc_famrama in varchar2,
+  cod_familia in number,
+  cod_pres in varchar2)
+  IS
+    probsalud_inexistente exception;
+    rama_inexistente exception;
+    famrama_inexistente exception;
+    familia_inexistente exception;
+    familia_inconsistente exception;
+    familia_existente exception;
+    probsalud_inconsistente exception;
+    
+    psgener_inexistente exception;
+    psgener_inconsistente exception;
+
+    begin
+
+    v_pk_probsalud:=Existe('probsalud', cod_ps);
+
+    if(v_pk_probsalud is null) then
+        /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
+        raise probsalud_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+            raise probsalud_inconsistente;
+        end if;
+    end if; 
+    
+    if(cod_ps_aux is not null) then
+        /* Chequear que exista un probsalud vigente con el codigo dado  */
+        v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.Existe('probsalud',cod_ps_aux);        
+        
+        if(v_pk_probsalud is null) then
+            /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
+            raise probsalud_inexistente;
+        else
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+                raise probsalud_inconsistente;
+            end if;
+        end if;         
+    end if;
+    
+    if(sis.sis_pck_prestacion.EXISTE('ps_gener',cod_ps_gen) is null) then
+        raise psgener_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('ps_gener',cod_ps_gen),dsc_probsalud,true)) then
+            raise psgener_inconsistente;
+        end if;                
+    end if; 
+    
+    /* Chequear que exista una rama con el cod_rama dado  */
+    if(cod_rama is not null) then
+        v_pk_rama:=SIS.SIS_PCK_PRESTACION.Existe('rama',cod_rama);
+        
+        if(v_pk_rama is null) then
+            /* Si no existe la familia, levantar la excepcion */
+            raise rama_inexistente;
+        end if;
+    else
+        v_pk_rama:=null;
+    end if; 
+
+    if(cod_familia is not null) then
+       /* buscar la familia en la tabla familia del usuario NCAT, usando como clave el cod_familia */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', cod_familia);
+
+        /* Si no existe la familia, levantamos la excepción */
+        if(v_pk_familia is null) then
+            raise familia_inexistente;
+        else
+            -- Si existe una familia para el cod_familia dado, chequear que las glosas coincidan. Si no coinciden, levantar la excepciòn
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('familia',v_pk_familia),dsc_famrama,false)) then
+                raise familia_inconsistente;
+            end if;
+        end if;   
+    else
+        /* buscar la familia en la tabla familia del usuario NCAT, usando como clave la glosa */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', dsc_famrama);
+        --dbms_output.put_line('v_pk_familia='||v_pk_familia);
+        
+        /* Si no existe la familia, la insertamos */
+        if(v_pk_familia is null) then
+            select NCAT.ncat_seq_familia_auge.nextval into v_pk_familia from dual;
+            insert into NCAT.NCAT_TAB_FAMILIA(familia_cod_familia, docu_cod_docu, familia_dsc_familia, familia_num_ordenrep)
+            select v_pk_familia, cod_docu, dsc_famrama, max(f.FAMILIA_NUM_ORDENREP)-mod(f.FAMILIA_NUM_ORDENREP,10)+10 from ncat.ncat_tab_familia f;
+        else
+            raise familia_existente;
+        end if;        
+    end if; 
+
+    v_pk_pres:=Existe('prestacion',cod_pres);
+
+    if(v_pk_pres is null) then
+        /* Si no existe la prestacion, crear la nueva prestacion */
+        select SIS_SEQ_PRESTACION.nextval into v_pk_pres from dual;
+        insert into sis_tab_prestacion(prestacion_cod_prestacion, referencia_cod_referencia, prestacion_dsc_codusua, prestacion_dsc_prestacion, prestacion_fec_vige, prestacion_num_arancel)
+        values (v_pk_pres, null, cod_pres, dsc_famrama, fecha, null);
+    end if;
+            
+    exception
+        when probsalud_inexistente then
+            v_codora  := 0;
+            v_msgora  := '.';
+            v_codlog  := 1000;
+            v_dsc_log := 'probsalud inexistente para código '||cod_ps||' o '||cod_ps_aux||'. Se hará rollback';
+            raise;    
+        when probsalud_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1010;
+            v_dsc_log := 'Existe el probsalud de pk='||v_pk_probsalud||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;  
+        when psgener_inexistente then
+            v_codora  := 0;
+            v_msgora  := '.';
+            v_codlog  := 1011;
+            v_dsc_log := 'psgener inexistente para cod_ps_gen '||cod_ps_gen;
+            raise;
+        when psgener_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1012;
+            v_dsc_log := 'Existe el psgener de pk='||cod_ps_gen||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;    
+        when rama_inexistente then
+            v_codora  := 1002;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1;
+            v_dsc_log := 'rama inexistente para rama de pk '||cod_rama;
+            raise;                    
+        when familia_inexistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1003;
+            v_dsc_log := 'familia inexistente para familia de pk '||cod_familia;
+            raise;
+        when familia_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1100;
+            v_dsc_log := 'Existe la familia de pk '||cod_familia||', sin embargo la glosa no coincide, revisar archivo .csv';
+            raise;
+        when familia_existente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1101;
+            v_dsc_log := 'familia existente para glosa '||dsc_famrama;
+            raise;                         
+        when others then
+            v_codora  := SQLCODE;
+            v_msgora  := SQLERRM;
+            v_codlog  := -1;
+            v_dsc_log := 'Excepción inesperada';            
+            raise;
+end;
 
 PROCEDURE QuitarPrestacionAuge(
   dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,
+  cod_rama in number,
   dsc_famrama in varchar2,
   cod_familia in number,
   cod_pres in varchar2)
@@ -865,6 +962,7 @@ PROCEDURE QuitarPrestacionAuge(
     v_num_regs number(12);
 
     probsalud_inexistente exception;
+    probsalud_inconsistente exception;
     rama_inexistente exception;
     famrama_inexistente exception;
     familia_inexistente exception;
@@ -872,15 +970,55 @@ PROCEDURE QuitarPrestacionAuge(
 
     union_existente exception;
     valoriza_existente exception;
+    
+    psgener_inexistente exception;
+    psgener_inconsistente exception;
 begin
 
-    /* Chequear que exista un probsalud vigente con la glosa dada  */
-    v_pk_probsalud:=Existe('probsalud',dsc_probsalud);
+   v_pk_probsalud:=Existe('probsalud', cod_ps);
 
     if(v_pk_probsalud is null) then
         /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
         raise probsalud_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+            raise probsalud_inconsistente;
+        end if;
+    end if; 
+    
+    if(cod_ps_aux is not null) then
+        /* Chequear que exista un probsalud vigente con el codigo dado  */
+        v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.Existe('probsalud',cod_ps_aux);        
+        
+        if(v_pk_probsalud is null) then
+            /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
+            raise probsalud_inexistente;
+        else
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+                raise probsalud_inconsistente;
+            end if;
+        end if;         
     end if;
+    
+    if(sis.sis_pck_prestacion.EXISTE('ps_gener',cod_ps_gen) is null) then
+        raise psgener_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('ps_gener',cod_ps_gen),dsc_probsalud,true)) then
+            raise psgener_inconsistente;
+        end if;                
+    end if;     
+    
+    /* Chequear que exista una rama con el cod_rama dado  */
+    if(cod_rama is not null) then
+        v_pk_rama:=SIS.SIS_PCK_PRESTACION.Existe('rama',cod_rama);
+        
+        if(v_pk_rama is null) then
+            /* Si no existe la familia, levantar la excepcion */
+            raise rama_inexistente;
+        end if;
+    else
+        v_pk_rama:=null;
+    end if;    
 
     /* Chequear que exista una familia con la glosa dada  */
     v_pk_familia:=Existe('familia',dsc_famrama);
@@ -889,10 +1027,10 @@ begin
         /* Si no existe la familia o no está vigente, levantamos la excepcion */
         raise familia_inexistente;
     end if;
-
+    
     /* Chequear que exista una prestacion con el código dado  */
     v_pk_pres:=Existe('prestacion',cod_pres);
-
+        
     if(v_pk_pres is null) then
         /* Si no existe la prestacion, levantar la excepción */
         raise prestacion_inexistente;
@@ -905,52 +1043,98 @@ begin
         /* Si no existe la prestacion, levantar la excepción */
         raise union_existente;
     end if;
-
-    /* Chequear que no exista una valoriza para esta familia y esta prestacion  */
-    v_pk_valoriza:=VAL.VAL_PCK_VALORIZA.Existe2('valoriza',v_pk_familia, v_pk_pres);
+    
+    /* Chequear si existe una valoriza asociada a esta prestación o a esta familia, y que además esté vigente */
+    if(v_pk_rama is null) then
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza2',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    else        
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza1',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    end if; 
 
     if(v_pk_valoriza is not null) then
         /* Si no existe la prestacion, levantar la excepción */
         raise valoriza_existente;
     end if;
 
-    /*Si se cumplen las precondiciones, procedemos a eliminar la familia y la prestación */
-
     -- Si el cod_familia especificado es nulo, eliminar la familia
     if(cod_familia is null) then
-        /* eliminar la familia */
-        delete from NCAT.NCAT_TAB_FAMILIA familia
-        where FAMILIA.FAMILIA_COD_FAMILIA=v_pk_familia;
-    end if;
-
-    v_pk_famramapres:=Existe('prestacion_famramapres',cod_pres);
+        /* buscar la familia en la tabla familia del usuario NCAT, usando como clave la glosa */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', dsc_famrama);
+        --dbms_output.put_line('v_pk_familia='||v_pk_familia);
+        
+        /* Si no existe la familia, la insertamos */
+        if(v_pk_familia is not null) then
+            delete from NCAT.NCAT_TAB_FAMILIA familia
+            where FAMILIA.FAMILIA_COD_FAMILIA=v_pk_familia;
+        else
+            raise familia_inexistente;
+        end if; 
+    end if;    
+    
+    v_pk_pres:=Existe('prestacion_famramapres_auge',cod_pres);
 
     /* Luego hacemos un cruce entre prestacion y famramapres con la prestación especificada en la planilla,
-    si este cruce da vacío, entonces eliminamos la prestación */
+    Si la prestacion es nueva (anyo actual), y ademas no esta asociada a una famramapres, entonces eliminamos la prestación */
 
-    if(v_pk_famramapres is null) then
-        /* Si el cruce es vacío, procedemos a eliminar la famrama */
+    if(v_pk_pres is not null) then
+        /* Si el cruce no es vacío, procedemos a eliminar la prestacion */
         delete from sis_tab_prestacion prestacion
         where PRESTACION.PRESTACION_COD_PRESTACION=v_pk_pres;
     end if;
-
+    
     exception
+        when probsalud_inexistente then
+            v_codora  := 0;
+            v_msgora  := '.';
+            v_codlog  := 1000;
+            v_dsc_log := 'probsalud inexistente para código '||cod_ps||' o '||cod_ps_aux||'. Se hará rollback';
+            raise;    
+        when probsalud_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1010;
+            v_dsc_log := 'Existe el probsalud de pk='||v_pk_probsalud||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;  
+        when psgener_inexistente then
+            v_codora  := 0;
+            v_msgora  := '.';
+            v_codlog  := 1011;
+            v_dsc_log := 'psgener inexistente para cod_ps_gen '||cod_ps_gen;
+            raise;
+        when psgener_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1012;
+            v_dsc_log := 'Existe el psgener de pk='||cod_ps_gen||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;             
         when familia_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
+            v_codlog  := 1001;
             v_dsc_log := 'familia inexistente para glosa '||dsc_famrama;
             raise;
         when prestacion_inexistente then
             v_codora  := 0;
             v_msgora  := 'Excepción';
-            v_codlog  := 1;
-            v_dsc_log := 'prestación inexistente para código '||cod_pres;
+            v_codlog  := 1002;
+            v_dsc_log := 'prestación inexistente para código '||cod_pres||'. famrama de glosa '||dsc_famrama;
             raise;
+       when union_existente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1004;
+            v_dsc_log := 'union existente para famrama de glosa '||dsc_famrama||' y prestación de código '||cod_pres||'. union de pk='||v_pk_union;
+            raise;
+        when valoriza_existente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1005;
+            v_dsc_log := 'valoriza existente para famrama de glosa '||dsc_famrama||' y prestación de código '||cod_pres||'. valoriza de pk='||v_pk_valoriza;
+            raise;            
         when others then
             v_codora  := SQLCODE;
             v_msgora  := SQLERRM;
-            v_codlog  := 1;
+            v_codlog  := -1;
             v_dsc_log := 'Excepción inesperada';
             raise;
 end;

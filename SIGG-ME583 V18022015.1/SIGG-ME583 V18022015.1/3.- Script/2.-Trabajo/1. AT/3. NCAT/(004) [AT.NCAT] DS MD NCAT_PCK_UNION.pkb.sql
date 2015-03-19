@@ -118,7 +118,7 @@ FUNCTION Existe(
              loop
                     v_pk := c1.pk;
                     exit; -- only care about one record, so exit.
-              end loop;
+              end loop;             
     end case;
 
     return v_pk;
@@ -197,9 +197,10 @@ BEGIN
     SIS.SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_UNPSRA','NCAT.NCAT_SEQ_UNPSRA');
     SIS.SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_RELAUNRE','NCAT.NCAT_SEQ_RELAUNRE');
 
-     for c in ( select IB.PROBLSALUD probsalud, IB.RAMA rama, IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion, ib.ARANCEL arancel,
-                       ib.EDAD edad, ib.SEXO sexo, ib.FRECUENCIA frecuencia, ib.EXCLUYENTES excluyentes
-                from SIS.INPUTBUFFER ib order by IB.ID )
+    for c in ( select IB.PROBLSALUD probsalud, ib.COD_PS_GEN cod_ps_gen, ib.COD_PS cod_ps, ib.COD_PS_AUX cod_ps_aux, ib.rama rama, IB.cod_rama cod_rama, 
+               IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion, ib.ARANCEL arancel, ib.EDAD edad, ib.SEXO sexo, 
+               ib.FRECUENCIA frecuencia, ib.EXCLUYENTES excluyentes
+               from SIS.INPUTBUFFER ib order by IB.ID )
                 loop
                     if(c.probsalud is null) then
                         raise probsalud_nulo;
@@ -211,7 +212,7 @@ BEGIN
                         raise prestacion_nulo;
                     end if;
                     if(auge) then
-                        AgregarUnionAuge(c.probsalud, c.rama, c.famrama, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);
+                        AgregarUnionAuge(c.probsalud, c.cod_ps_gen, c.cod_ps, c.cod_ps_aux, c.rama, c.famrama, c.cod_familia, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);
                     else
                         AgregarUnionNoAuge(c.probsalud, c.rama, c.famrama, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);
                     end if;
@@ -257,6 +258,10 @@ BEGIN
             Sis.Sis_Pro_Log ('AgregarPrograma', v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when others then
             rollback;
+            if(v_dsc_log is null or v_codlog is null) then
+                v_dsc_log := 'Error';
+                v_codlog  := -1;
+            end if;
             Sis.Sis_Pro_Log ( v_nomproc, V_CODLOG, SQLCODE, SQLERRM, v_dsc_log, out_error);
 
 END;
@@ -294,6 +299,7 @@ BEGIN
     else
         auge:=false;
         cod_docu:=15;
+        tiptrapa:=1;
         v_nomproc:='QuitarNcatProgramaNoAuge';
     end if;
     
@@ -302,9 +308,10 @@ BEGIN
     --Chequear que la tabla inputbuffer tenga data
     SELECT 1 into v_data  FROM sis.inputbuffer WHERE ROWNUM=1;
 
-    for c in ( select IB.PROBLSALUD probsalud, IB.RAMA rama, IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion, ib.ARANCEL arancel,
-                       ib.EDAD edad, ib.SEXO sexo, ib.FRECUENCIA frecuencia, ib.EXCLUYENTES excluyentes
-               from SIS.INPUTBUFFER ib order by IB.ID )
+    for c in ( select IB.PROBLSALUD probsalud, ib.COD_PS_GEN cod_ps_gen, ib.COD_PS cod_ps, ib.COD_PS_AUX cod_ps_aux, ib.rama rama, IB.cod_rama cod_rama, 
+               IB.FAMRAMA famrama, IB.COD_FAMILIA cod_familia, IB.PRESTACION prestacion, ib.ARANCEL arancel, ib.EDAD edad, ib.SEXO sexo, 
+               ib.FRECUENCIA frecuencia, ib.EXCLUYENTES excluyentes
+               from SIS.INPUTBUFFER ib order by IB.ID  )
     loop
         if(c.probsalud is null) then
             raise probsalud_nulo;
@@ -316,14 +323,13 @@ BEGIN
             raise prestacion_nulo;
         end if;
         if(auge) then
-            AgregarUnionAuge(c.probsalud, c.rama, c.famrama, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);
+            QuitarUnionAuge(c.probsalud, c.cod_ps_gen, c.cod_ps, c.cod_ps_aux, c.cod_rama, c.famrama, c.cod_familia, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);          
         else
             QuitarUnionNoAuge(c.probsalud, c.rama, c.famrama, c.prestacion, c.arancel, c.edad, c.sexo, c.frecuencia, c.excluyentes);
         end if;
     end loop;
 
          /* Resetear secuencias involucradas en la transacción */
-
         SIS.SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_UNION','NCAT.NCAT_SEQ_UNION');
         SIS.SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_UNEDAD','NCAT.NCAT_SEQ_UNEDAD');
         SIS.SIS_PCK_HELPER.RESETSEQ('NCAT.NCAT_TAB_UNSEXO','NCAT.NCAT_SEQ_UNSEXO');
@@ -373,6 +379,10 @@ BEGIN
             Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
         when others then
             rollback;
+            if(v_dsc_log is null or v_codlog is null) then
+                v_dsc_log := 'Error';
+                v_codlog  := -1;
+            end if;
             Sis.Sis_Pro_Log ( v_nomproc, V_CODLOG, SQLCODE, SQLERRM, v_dsc_log, out_error);
 
 END;
@@ -392,6 +402,7 @@ PROCEDURE AgregarUnionNoAuge(
   IS
     v_numedad number(2);
     v_numedad_aux number(2):=null;
+    v_boo_cod number(1):=null;
     v_num_cantmax number(2);
     v_pk_presaux number(12):=null;
     v_regla_edad boolean:=false;
@@ -500,8 +511,15 @@ PROCEDURE AgregarUnionNoAuge(
             when 2 then
                 v_numedad:=c.param;
             when 3 then
-                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+                case c.param
+                    when 'y' then
+                        v_boo_cod:=1;
+                    when 'o' then
+                        v_boo_cod:=2;   
+                end case;
             when 4 then
+                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+            when 5 then
                 v_numedad_aux:=c.param;
         end case;
     end loop;
@@ -510,15 +528,14 @@ PROCEDURE AgregarUnionNoAuge(
         -- TODO: Chequear que no exista regla para este cod_union
         if(Existe('unedad',v_pk_union) is null) then
             select NCAT.NCAT_SEQ_UNEDAD.nextval into v_pk_unedad from dual;
-            insert into NCAT.NCAT_TAB_UNEDAD(unedad_cod_unedad, union_cod_union, tipinter_cod_tipinter, unedad_num_edadano, tipinter_cod_tipinter_aux, unedad_num_edadano_aux)
-            values (v_pk_unedad, v_pk_union, v_pk_tipinter, v_numedad, v_pk_tipinter_aux, v_numedad_aux);
+            insert into NCAT.NCAT_TAB_UNEDAD(unedad_cod_unedad, union_cod_union, tipinter_cod_tipinter, unedad_num_edadano, tipinter_cod_tipinter_aux, unedad_num_edadano_aux, boo_cod_and)
+            values (v_pk_unedad, v_pk_union, v_pk_tipinter, v_numedad, v_pk_tipinter_aux, v_numedad_aux, v_boo_cod);
         else
             raise unedad_existente;
         end if;
     end if;
 
     -- Luego insertar la regla de sexo
-
     if(trim(sexo) is not null) then
         v_pk_genero:=SIS.SIS_PCK_PRESTACION.Existe('genero',sexo);
 
@@ -563,7 +580,6 @@ PROCEDURE AgregarUnionNoAuge(
     end if;
 
     -- Luego insertar la regla de excluyentes
-
     for c in (select rownum num_param, column_value param from table(SIS.SIS_PCK_HELPER.SPLIT2(trim(excluyentes),',')) )
     loop
         if(c.param is not null) then
@@ -607,15 +623,13 @@ PROCEDURE AgregarUnionNoAuge(
     if(Existe('relaunre',v_pk_union) is null) then
         --select NCAT.NCAT_SEQ_RELAUNRE.nextval into v_pk_relaunre from dual;
         select max(rel.RELAUNRE_COD_RELAUNRE) into v_pk_relaunre from ncat.ncat_tab_relaunre rel;
-        dbms_output.put_line('v_pk_relaunre='||v_pk_relaunre);
-        insert into NCAT.NCAT_TAB_RELAUNRE(relaunre_cod_relaunre, regla_cod_regla, union_cod_union, tipmotor_cod_tipmotor, relaunre_fec_vige, relaunre_fec_vcto)
-        select v_pk_relaunre+rownum id, r.REGLA_COD_REGLA, v_pk_union, 2, fecha_ini, fecha_fin from NCAT.NCAT_TAB_REGLA r order by id;
+        insert into NCAT.NCAT_TAB_RELAUNRE(relaunre_cod_relaunre, regla_cod_regla, union_cod_union, tipmotor_cod_tipmotor, relaunre_fec_vige)
+        select v_pk_relaunre+rownum id, r.REGLA_COD_REGLA, v_pk_union, 2, fecha_ini from NCAT.NCAT_TAB_REGLA r order by id;
     else
         raise relaunre_existente;
     end if;
 
     -- en otro caso levantar excepción
-
     exception
         when probsalud_inexistente then
             v_codora  := 0;
@@ -737,6 +751,7 @@ PROCEDURE QuitarUnionNoAuge(
     v_numedad number(2);
     v_numedad_aux number(2):=null;
     v_num_cantmax number(2);
+    v_boo_cod number(1):=null;
     v_pk_presaux number(12):=null;
     v_regla_edad boolean:=false;
     v_regla_frec boolean:=false;
@@ -832,8 +847,15 @@ PROCEDURE QuitarUnionNoAuge(
             when 2 then
                 v_numedad:=c.param;
             when 3 then
-                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+                case c.param
+                    when 'y' then
+                        v_boo_cod:=1;
+                    when 'o' then
+                        v_boo_cod:=2;   
+                end case;
             when 4 then
+                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+            when 5 then
                 v_numedad_aux:=c.param;
         end case;
     end loop;
@@ -936,7 +958,6 @@ PROCEDURE QuitarUnionNoAuge(
     end if;
 
     -- finalmente eliminar la union con: tiptrapa, cod_docu, fec_ini, fec_fin
-
     if(v_pk_union is not null) then
         delete from ncat.ncat_tab_union u where u.UNION_COD_UNION=v_pk_union;
     else
@@ -1052,8 +1073,12 @@ PROCEDURE QuitarUnionNoAuge(
 
 PROCEDURE AgregarUnionAuge(
   dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,  
+  cod_rama in number,
   dsc_famrama in varchar2,
+  cod_familia in number,
   cod_pres in varchar2,
   arancel in number,
   edad in varchar2,
@@ -1063,12 +1088,14 @@ PROCEDURE AgregarUnionAuge(
   )
   IS
     v_numedad number(2);
+    v_boo_cod number(1):=null;
     v_numedad_aux number(2);
     v_num_cantmax number(2);
     v_regla_edad boolean:=false;
     v_regla_frec boolean:=false;
 
     probsalud_inexistente exception;
+    probsalud_inconsistente exception;
     rama_inexistente exception;
     famrama_inexistente exception;
     familia_inexistente exception;
@@ -1085,58 +1112,98 @@ PROCEDURE AgregarUnionAuge(
     unincpre_existente exception;
     unpsra_existente exception;
     relaunre_existente exception;
-
+    familia_inconsistente exception;
+    
+    psgener_inexistente exception;
+    psgener_inconsistente exception;        
     begin
 
-    -- Obtener pk del probsalud usando como clave de búsqueda la glosa dada
-    v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.EXISTE('probsalud',dsc_probsalud);
-
+    /* Chequear que exista un probsalud vigente con el codigo dado  */
+    v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.Existe('probsalud',cod_ps);        
+    
     if(v_pk_probsalud is null) then
+        /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
         raise probsalud_inexistente;
-    end if;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+            raise probsalud_inconsistente;
+        end if;
+    end if; 
+    
+    if(cod_ps_aux is not null) then
+        /* Chequear que exista un probsalud vigente con el codigo dado  */
+        v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.Existe('probsalud',cod_ps_aux);        
+        
+        if(v_pk_probsalud is null) then
+            /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
+            raise probsalud_inexistente;
+        else
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+                raise probsalud_inconsistente;
+            end if;
+        end if;         
+    end if;    
+    
+    if(sis.sis_pck_prestacion.EXISTE('ps_gener',cod_ps_gen) is null) then
+        raise psgener_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('ps_gener',cod_ps_gen),dsc_probsalud,true)) then
+            raise psgener_inconsistente;
+        end if;                
+    end if;          
 
-    -- Obtener pk de la rama usando como clave de búsqueda la glosa dada
-    v_pk_rama:=SIS.SIS_PCK_PRESTACION.EXISTE('rama',dsc_rama);
+    /* Chequear que exista una rama con el cod_rama dado  */
+    if(cod_rama is not null) then
+        v_pk_rama:=SIS.SIS_PCK_PRESTACION.Existe('rama',cod_rama);
+        
+        if(v_pk_rama is null) then
+            /* Si no existe la familia, levantar la excepcion */
+            raise rama_inexistente;
+        end if;
+    else
+        v_pk_rama:=null;
+    end if;    
 
-    if(v_pk_rama is null) then
-         --  Si no existe la rama, levantar excepción
-        raise rama_inexistente;
-    end if;
+    if(cod_familia is not null) then
+       /* buscar la familia en la tabla familia del usuario NCAT, usando como clave el cod_familia */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', cod_familia);
 
-    --Seleccionar la famrama más reciente según vigencia, usando como clave de búsqueda la glosa dada
-    v_pk_famrama:=SIS.SIS_PCK_PRESTACION.EXISTE('famrama',dsc_famrama);
+        /* Si no existe la familia, levantamos la excepción */
+        if(v_pk_familia is null) then
+            raise familia_inexistente;
+        else
+            -- Si existe una familia para el cod_familia dado, chequear que las glosas coincidan. Si no coinciden, levantar la excepciòn
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('familia',v_pk_familia),dsc_famrama,false)) then
+                raise familia_inconsistente;
+            end if;
+        end if;   
+    else
+        /* buscar la familia en la tabla familia del usuario NCAT, usando como clave la glosa */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', dsc_famrama);
+        --dbms_output.put_line('v_pk_familia='||v_pk_familia);
+        
+        /* Si no existe la familia, levantamos la excepción */
+        if(v_pk_familia is null) then
+            raise familia_inexistente;
+        end if;
+    end if;                
 
-    if(v_pk_famrama is null) then
-        -- Si no existe la famrama o no está vigente, levantar la excepcion
-        raise famrama_inexistente;
-    end if;
+    v_pk_pres:= SIS.SIS_PCK_PRESTACION.EXISTE('prestacion',cod_pres);
 
-    -- Seleccionar la familia correspondiente a la famrama
-    v_pk_familia:=SIS.SIS_PCK_PRESTACION.EXISTE('familia',v_pk_famrama);
-
-    if(v_pk_familia is null) then
-        -- Si no existe la familia, levantar la excepcion
-        raise familia_inexistente;
-    end if;
-
-   v_pk_pres:= SIS.SIS_PCK_PRESTACION.EXISTE('prestacion',cod_pres);
-
-    -- Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado
+    /* Seleccionar la prestación, usando como clave de búsqueda, el código de prestación dado */
     if(v_pk_pres is null) then
-        -- Si no existe la prestacion, levantar excepción
+        /* Si no existe la prestacion, levantar excepción */
         raise prestacion_inexistente;
     end if;
+                            
+    /*Si se cumplen las precondiciones, proceder a insertar la valorización para esta prestacion */
 
-    v_pk_famramapres:=SIS.SIS_PCK_PRESTACION.EXISTE('famramapres',v_pk_famrama,v_pk_pres);
-
-    -- Ahora verificar que existe una famramapres con las pk obtenidas
-    if(v_pk_famramapres is null) then
-         -- Si no existe la famramapres, levantar la excepción
-        raise famramapres_inexistente;
-    end if;
-
-    -- Chequear si existe una valoriza asociada a esta prestación o a esta familia, y que además esté vigente
-    v_pk_valoriza:= VAL.VAL_PCK_VALORIZA.Existe2('valoriza',v_pk_famrama,v_pk_pres);
+    /* Chequear si existe una valoriza asociada a esta prestación o a esta familia, y que además esté vigente */
+    if(v_pk_rama is null) then
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza2',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    else        
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza1',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    end if;        
 
     if(v_pk_valoriza is null) then
         raise valoriza_inexistente;
@@ -1146,13 +1213,13 @@ PROCEDURE AgregarUnionAuge(
 
     -- 1o insertar la union con: tiptrapa, cod_docu, fec_ini, fec_fin
 
-    v_pk_union:=NCAT.NCAT_PCK_UNION.Existe('union_unincpre',v_pk_famrama, v_pk_pres);
+    v_pk_union:=NCAT.NCAT_PCK_UNION.Existe('union_unincpre',cod_ps_gen, v_pk_pres);
 
     if(v_pk_union is null) then
         select ncat.ncat_seq_union.nextval into v_pk_union from dual;
         insert into ncat.ncat_tab_union(UNION_COD_UNION, TIPTRAPA_COD_TIPTRAPA, DOCU_COD_DOCU, UNION_FEC_VIGE, UNION_FEC_VCTO, UNION_FEC_CREACION,
                                                      UNION_FEC_MODIFICACION, UNION_PGGENER_O_FAMRAMA)
-        values (v_pk_union, tiptrapa, cod_docu, fecha_ini,  fecha_fin, fecha_ini, sysdate, v_pk_famrama);
+        values (v_pk_union, tiptrapa, cod_docu, fecha_ini,  fecha_fin, fecha_ini, sysdate, cod_ps_gen);
     else
         raise union_existente;
     end if;
@@ -1168,8 +1235,15 @@ PROCEDURE AgregarUnionAuge(
             when 2 then
                 v_numedad:=c.param;
             when 3 then
-                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+                case c.param
+                    when 'y' then
+                        v_boo_cod:=1;
+                    when 'o' then
+                        v_boo_cod:=2;   
+                end case;
             when 4 then
+                v_pk_tipinter_aux:=NCAT.NCAT_PCK_UNION.Existe('tipinter',c.param);
+            when 5 then
                 v_numedad_aux:=c.param;
         end case;
     end loop;
@@ -1216,7 +1290,7 @@ PROCEDURE AgregarUnionAuge(
                 when 2 then
                     v_pk_period:= SIS.SIS_PCK_PRESTACION.Existe('period',c.param);
             end case;
-        end if;
+        end if;        
     end loop;
 
     if(v_regla_frec) then
@@ -1259,7 +1333,7 @@ PROCEDURE AgregarUnionAuge(
     if(Existe('unpsra',v_pk_union) is null) then
         select NCAT.NCAT_SEQ_UNPSRA.nextval into v_pk_unpsra from dual;
         insert into NCAT.NCAT_TAB_UNPSRA(unpsra_cod_unpsra, union_cod_union, problsalud_cod_problsalud, rama_cod_rama, is_cod_is, familia_cod_familia)
-        values (v_pk_unpsra, v_pk_union, v_pk_probsalud, v_pk_rama, 5, v_pk_famrama);
+        values (v_pk_unpsra, v_pk_union, v_pk_probsalud, v_pk_rama, 5, v_pk_familia);
     else
         raise unpsra_existente;
     end if;
@@ -1269,8 +1343,8 @@ PROCEDURE AgregarUnionAuge(
     if(Existe('relaunre',v_pk_union) is null) then
         --select NCAT.NCAT_SEQ_RELAUNRE.nextval into v_pk_relaunre from dual;
         select max(rel.RELAUNRE_COD_RELAUNRE) into v_pk_relaunre from ncat.ncat_tab_relaunre rel;
-        insert into NCAT.NCAT_TAB_RELAUNRE(relaunre_cod_relaunre, regla_cod_regla, union_cod_union, tipmotor_cod_tipmotor, relaunre_fec_vige, relaunre_fec_vcto)
-        select v_pk_relaunre+rownum id, r.REGLA_COD_REGLA, v_pk_union, 2, fecha_ini, fecha_fin from NCAT.NCAT_TAB_REGLA r order by id;
+        insert into NCAT.NCAT_TAB_RELAUNRE(relaunre_cod_relaunre, regla_cod_regla, union_cod_union, tipmotor_cod_tipmotor, relaunre_fec_vige)
+        select v_pk_relaunre+rownum id, r.REGLA_COD_REGLA, v_pk_union, 2, fecha_ini from NCAT.NCAT_TAB_REGLA r order by id;
     else
         raise relaunre_existente;
     end if;
@@ -1284,35 +1358,41 @@ PROCEDURE AgregarUnionAuge(
             v_codlog  := 1;
             v_dsc_log := 'probsalud inexistente para glosa '||dsc_probsalud;
             raise;
-        when rama_inexistente then
+        when probsalud_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1010;
+            v_dsc_log := 'Existe el probsalud de pk='||v_pk_probsalud||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;   
+        when psgener_inexistente then
             v_codora  := 0;
             v_msgora  := '.';
             v_codlog  := 1;
-            v_dsc_log := 'rama inexistente para glosa '||dsc_rama;
+            v_dsc_log := 'psgener inexistente para cod_ps_gen '||cod_ps_gen;
             raise;
-        when famrama_inexistente then
+        when psgener_inconsistente then
             v_codora  := 0;
-            v_msgora  := '.';
-            v_codlog  := 1;
-            v_dsc_log := 'famrama inexistente para glosa '||dsc_famrama;
-            raise;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1010;
+            v_dsc_log := 'Existe el psgener de pk='||cod_ps_gen||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;                         
         when familia_inexistente then
             v_codora  := 0;
             v_msgora  := '.';
             v_codlog  := 1;
             v_dsc_log := 'familia inexistente para famrama de glosa '||dsc_famrama;
             raise;
+        when familia_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1;
+            v_dsc_log := 'Existe la familia de pk '||cod_familia||', sin embargo la glosa no coincide, revisar archivo .csv';
+            raise;       
         when prestacion_inexistente then
             v_codora  := 0;
             v_msgora  := '.';
             v_codlog  := 1;
             v_dsc_log := 'prestación inexistente para código '||cod_pres;
-            raise;
-        when famramapres_inexistente then
-            v_codora  := 0;
-            v_msgora  := '.';
-            v_codlog  := 1;
-            v_dsc_log := 'famramapres inexistente para glosa '||dsc_famrama||' y código '||cod_pres;
             raise;
         when valoriza_inexistente then
             v_codora  := 0;
@@ -1378,8 +1458,12 @@ PROCEDURE AgregarUnionAuge(
 
 PROCEDURE QuitarUnionAuge(
   dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,  
+  cod_rama in number,
   dsc_famrama in varchar2,
+  cod_familia in number,
   cod_pres in varchar2,
   arancel in number,
   edad in varchar2,
@@ -1395,9 +1479,11 @@ PROCEDURE QuitarUnionAuge(
     v_regla_frec boolean:=false;
 
     probsalud_inexistente exception;
+    probsalud_inconsistente exception;
     rama_inexistente exception;
     famrama_inexistente exception;
     familia_inexistente exception;
+    familia_inconsistente exception;
     prestacion_inexistente exception;
     famramapres_inexistente exception;
     valoriza_inexistente exception;
@@ -1410,58 +1496,82 @@ PROCEDURE QuitarUnionAuge(
     unincpre_inexistente exception;
     unpsra_inexistente exception;
     relaunre_inexistente exception;
+    
+    psgener_inexistente exception;
+    psgener_inconsistente exception;
 
     begin
 
-    -- Obtener pk del probsalud usando como clave de búsqueda la glosa dada
-    v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.EXISTE('probsalud',dsc_probsalud);
-
+     /* Chequear que exista un probsalud vigente con el codigo dado  */
+    v_pk_probsalud:=SIS.SIS_PCK_PRESTACION.Existe('probsalud',cod_ps);        
+    
     if(v_pk_probsalud is null) then
+        /* Si no existe el probsalud o no está vigente, levantamos la excepcion */
         raise probsalud_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('probsalud',v_pk_probsalud),dsc_probsalud,true)) then
+            raise probsalud_inconsistente;
+        end if;
+    end if;   
+    
+    if(sis.sis_pck_prestacion.EXISTE('ps_gener',cod_ps_gen) is null) then
+        raise psgener_inexistente;
+    else
+        if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('ps_gener',cod_ps_gen),dsc_probsalud,true)) then
+            raise psgener_inconsistente;
+        end if;                
+    end if;      
+
+    /* Chequear que exista una rama con el cod_rama dado  */
+    if(cod_rama is not null) then
+        v_pk_rama:=SIS.SIS_PCK_PRESTACION.Existe('rama',cod_rama);
+        
+        if(v_pk_rama is null) then
+            /* Si no existe la familia, levantar la excepcion */
+            raise rama_inexistente;
+        end if;
+    else
+        v_pk_rama:=null;
+    end if;    
+
+    if(cod_familia is not null) then
+       /* buscar la familia en la tabla familia del usuario NCAT, usando como clave el cod_familia */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', cod_familia);
+
+        /* Si no existe la familia, levantamos la excepción */
+        if(v_pk_familia is null) then
+            raise familia_inexistente;
+        else
+            -- Si existe una familia para el cod_familia dado, chequear que las glosas coincidan. Si no coinciden, levantar la excepciòn
+            if not(sis.sis_pck_helper.compare(SIS.SIS_PCK_PRESTACION.GetGlosa('familia',v_pk_familia),dsc_famrama,false)) then
+                raise familia_inconsistente;
+            end if;
+        end if;   
+    else
+        /* buscar la familia en la tabla familia del usuario NCAT, usando como clave la glosa */
+        v_pk_familia:=SIS.SIS_PCK_PRESTACION.Existe('familia', dsc_famrama);
+        --dbms_output.put_line('v_pk_familia='||v_pk_familia);
+        
+        /* Si no existe la familia, levantamos la excepción */
+        if(v_pk_familia is null) then
+            raise familia_inexistente;
+        end if;
     end if;
+    
+    /* Chequear que exista una prestacion con el código dado  */
+    v_pk_pres:=SIS.SIS_PCK_PRESTACION.Existe('prestacion',cod_pres);
 
-    -- Obtener pk de la rama usando como clave de búsqueda la glosa dada
-    v_pk_rama:=SIS.SIS_PCK_PRESTACION.EXISTE('rama',dsc_rama);
-
-    if(v_pk_rama is null) then
-         --  Si no existe la rama, levantar excepción
-        raise rama_inexistente;
-    end if;
-
-    --Seleccionar la famrama más reciente según vigencia, usando como clave de búsqueda la glosa dada
-    v_pk_famrama:=SIS.SIS_PCK_PRESTACION.EXISTE('famrama',dsc_famrama);
-
-    if(v_pk_famrama is null) then
-        -- Si no existe la famrama o no está vigente, levantar la excepcion
-        raise famrama_inexistente;
-    end if;
-
-    -- Seleccionar la familia correspondiente a la famrama
-    v_pk_familia:=SIS.SIS_PCK_PRESTACION.EXISTE('familia',v_pk_famrama);
-
-    if(v_pk_familia is null) then
-        -- Si no existe la familia, levantar la excepcion
-        raise familia_inexistente;
-    end if;
-
-    v_pk_pres:= SIS.SIS_PCK_PRESTACION.EXISTE('prestacion',cod_pres);
-
-    -- Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado
     if(v_pk_pres is null) then
-        -- Si no existe la prestacion, levantar excepción
+        /* Si no existe la prestacion, levantar la excepción */
         raise prestacion_inexistente;
-    end if;
-
-    v_pk_famramapres:=SIS.SIS_PCK_PRESTACION.EXISTE('famramapres',v_pk_famrama,v_pk_pres);
-
-    -- Ahora verificar que existe una famramapres con las pk obtenidas
-    if(v_pk_famramapres is null) then
-         -- Si no existe la famramapres, levantar la excepción
-        raise famramapres_inexistente;
-    end if;
-
-    -- Chequear si existe una valoriza asociada a esta prestación o a esta familia, y que además esté vigente
-    v_pk_valoriza:= VAL.VAL_PCK_VALORIZA.Existe2('valoriza',v_pk_famrama,v_pk_pres);
+    end if;        
+    
+    /* Chequear si existe una valoriza asociada a esta prestación o a esta familia, y que además esté vigente */
+    if(v_pk_rama is null) then
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza2',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    else
+        v_pk_valoriza:= val.val_pck_valoriza.Existe2('valoriza1',v_pk_familia,v_pk_pres, v_pk_rama, v_pk_probsalud);
+    end if;       
 
     if(v_pk_valoriza is null) then
         raise valoriza_inexistente;
@@ -1470,10 +1580,10 @@ PROCEDURE QuitarUnionAuge(
     --Si se cumplen las precondiciones, proceder a insertar la union para esta prestacion
 
     -- 1o eliminar la union con: tiptrapa, cod_docu, fec_ini, fec_fin
+    
+    v_pk_union:=NCAT.NCAT_PCK_UNION.Existe('union_unincpre',cod_ps_gen, v_pk_pres);
 
-    v_pk_union:=NCAT.NCAT_PCK_UNION.Existe('union_unincpre',v_pk_famrama, v_pk_pres);
-
-    if(v_pk_union is not null) then
+    if(v_pk_union is null) then
         delete from ncat.ncat_tab_union u where u.UNION_COD_UNION=v_pk_union;
     else
         raise union_inexistente;
@@ -1595,18 +1705,24 @@ PROCEDURE QuitarUnionAuge(
             v_codlog  := 1;
             v_dsc_log := 'probsalud inexistente para glosa '||dsc_probsalud;
             raise;
-        when rama_inexistente then
+        when probsalud_inconsistente then
+            v_codora  := 0;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1010;
+            v_dsc_log := 'Existe el probsalud de pk='||v_pk_probsalud||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;  
+        when psgener_inexistente then
             v_codora  := 0;
             v_msgora  := '.';
-            v_codlog  := 1;
-            v_dsc_log := 'rama inexistente para glosa '||dsc_rama;
+            v_codlog  := 1011;
+            v_dsc_log := 'psgener inexistente para cod_ps_gen '||cod_ps_gen;
             raise;
-        when famrama_inexistente then
+        when psgener_inconsistente then
             v_codora  := 0;
-            v_msgora  := '.';
-            v_codlog  := 1;
-            v_dsc_log := 'famrama inexistente para glosa '||dsc_famrama;
-            raise;
+            v_msgora  := 'Excepción';
+            v_codlog  := 1012;
+            v_dsc_log := 'Existe el psgener de pk='||cod_ps_gen||', sin embargo la glosa '||dsc_probsalud||' no coincide, revisar archivo .csv';
+            raise;               
         when familia_inexistente then
             v_codora  := 0;
             v_msgora  := '.';
@@ -1618,12 +1734,6 @@ PROCEDURE QuitarUnionAuge(
             v_msgora  := '.';
             v_codlog  := 1;
             v_dsc_log := 'prestación inexistente para código '||cod_pres;
-            raise;
-        when famramapres_inexistente then
-            v_codora  := 0;
-            v_msgora  := '.';
-            v_codlog  := 1;
-            v_dsc_log := 'famramapres inexistente para glosa '||dsc_famrama||' y código '||cod_pres;
             raise;
         when valoriza_inexistente then
             v_codora  := 0;

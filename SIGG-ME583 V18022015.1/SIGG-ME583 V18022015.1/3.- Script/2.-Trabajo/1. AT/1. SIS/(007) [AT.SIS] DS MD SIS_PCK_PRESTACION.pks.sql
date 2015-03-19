@@ -84,27 +84,31 @@ PROCEDURE QuitarPrograma
 
   PROCEDURE AgregarPrestacionAuge(
   dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,
+  cod_rama in number,
   dsc_famrama in varchar2,
   cod_familia in number,
   cod_pres in varchar2);
-  --OUT_ERROR  OUT NUMBER);
 
   PROCEDURE QuitarPrestacionNoAuge(
   dsc_probsalud in varchar2,
   dsc_rama in varchar2,
   dsc_famrama in varchar2,
   cod_pres in varchar2);
-  --OUT_ERROR  OUT NUMBER);
 
   PROCEDURE QuitarPrestacionAuge(
   dsc_probsalud in varchar2,
-  dsc_rama in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,
+  cod_rama in number,
   dsc_famrama in varchar2,
   cod_familia in number,
   cod_pres in varchar2);
   --OUT_ERROR  OUT NUMBER);
 
-END SIS_PCK_PRESTACION;
+END SIS_PCK_PRESTACION; 
 /
 

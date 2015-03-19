@@ -22,7 +22,9 @@ Observacion      :
 
 CREATE TABLE INPUTBUFFER                                              
    ( "ID" NUMBER(12,0) NOT NULL PRIMARY KEY,                                         
-    "PROBLSALUD" VARCHAR2(60),                                                     
+    "PROBLSALUD" VARCHAR2(60),    
+	"COD_PS" NUMBER(12,0),
+	"COD_PS_AUX" NUMBER(12,0),
     "RAMA" VARCHAR2(200),   
 	"COD_RAMA" NUMBER(12,0),
     "FAMRAMA" VARCHAR2(150),

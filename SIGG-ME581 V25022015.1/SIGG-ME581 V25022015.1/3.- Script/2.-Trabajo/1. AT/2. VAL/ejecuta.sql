@@ -1,0 +1,9 @@
+set echo on;
+
+@'(001) [AT.VAL] DS MD DROP_OBJETOS_BD.sql';
+@'(002) [AT.VAL] DS MD CREACION_SECUENCIAS.sql';
+@'(003) [AT.VAL] DS MD VAL_PCK_VALORIZA.pks.sql';
+@'(004) [AT.VAL] DS MD VAL_PCK_VALORIZA.pkb.sql';
+@'(005) [AT.VAL] DS MD GRANT_OBJETOS_BD.sql';
+
+exit;

@@ -1,0 +1,60 @@
+
+SQL*Loader: Release 11.2.0.1.0 - Production on Mié Mar 18 17:09:31 2015
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Archivo de Control:   sqlldr-add-new.ctl
+Archivo de Datos:      params.csv
+  Archivo de Errores:     params.bad
+  Desechar Archivo:  ninguno especificado
+ 
+ (Permitir todos los registros desechados)
+
+Número a cargar: ALL
+Número a ignorar: 0
+Errores permitidos: 50
+Matriz de enlace:     64 filas, máximo de 256000 bytes
+Continuación:    ninguno especificado
+Ruta de acceso utilizada:      Convencional
+
+Tabla SIS.INPUTBUFFER, cargada de cada registro lógico.
+Opción INSERT activa para esta tabla: INSERT
+Opción TRAILING NULLCOLS activada
+
+   Nombre Columna               Posición   Long  Term Entorno Tipo de Dato
+------------------------------ ---------- ----- ---- ---- ---------------------
+ID                                  FIRST     *   ;       CHARACTER            
+COD_PS_GEN                           NEXT     *   ;       CHARACTER            
+COD_PS                               NEXT     *   ;       CHARACTER            
+COD_PS_AUX                           NEXT     *   ;       CHARACTER            
+PROBLSALUD                           NEXT     *   ;       CHARACTER            
+COD_RAMA                             NEXT     *   ;       CHARACTER            
+FAMRAMA                              NEXT     *   ;       CHARACTER            
+COD_FAMILIA                          NEXT     *   ;       CHARACTER            
+PRESTACION                           NEXT     *   ;       CHARACTER            
+ARANCEL                              NEXT     *   ;       CHARACTER            
+
+Registro 838: Rechazado - Error en tabla SIS.INPUTBUFFER, columna COD_FAMILIA.
+ORA-01722: número no válido
+
+
+Tabla SIS.INPUTBUFFER:
+  910 Filas se ha cargado correctamente.
+  1 Fila no cargada debido a errores de datos.
+  0 Filas no cargada porque todas las cláusulas WHEN han fallado.
+  0 Filas no cargada porque todos los campos eran nulos.
+
+
+Espacio asignado a matriz de enlace:           165120 bytes (64 filas)
+Bytes de buffer de lectura: 1048576
+
+Total de registros lógicos ignorados:          0
+Total de registros lógicos leídos:         911
+Total de registros lógicos rechazados:         1
+Total de registros lógicos desechados:        0
+
+La ejecución empezó en Mié Mar 18 17:09:31 2015
+La ejecución terminó en Mié Mar 18 17:09:32 2015
+
+Tiempo transcurrido:     00:00:00.24
+Tiempo de CPU:         00:00:00.09

@@ -1,0 +1,23 @@
+
+SQL*Plus: Release 11.2.0.1.0 Production on Lun Mar 16 10:23:26 2015
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+
+Conectado a:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> 
+SQL> @'agregar_programa_no_auge.sql';
+SQL> begin
+  2  	     SIS.SIS_PCK_PRESTACION.AGREGARPROGRAMA('NO AUGE');
+  3  end;
+  4  /
+
+Procedimiento PL/SQL terminado correctamente.
+
+SQL> 
+SQL> exit;
+Desconectado de Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options

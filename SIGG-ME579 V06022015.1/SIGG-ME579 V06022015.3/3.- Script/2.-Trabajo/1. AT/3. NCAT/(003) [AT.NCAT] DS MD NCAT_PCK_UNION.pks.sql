@@ -113,29 +113,37 @@ excluyentes in varchar2
 );
 
 PROCEDURE AgregarUnionAuge(
-dsc_probsalud in varchar2,
-dsc_rama in varchar2,
-dsc_famrama in varchar2,
-cod_pres in varchar2,
-arancel in number,
-edad in varchar2,
-sexo in varchar2,
-frecuencia in varchar2,
-excluyentes in varchar2
+ dsc_probsalud in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,  
+  cod_rama in number,
+  dsc_famrama in varchar2,
+  cod_familia in number,
+  cod_pres in varchar2,
+  arancel in number,
+  edad in varchar2,
+  sexo in varchar2,
+  frecuencia in varchar2,
+  excluyentes in varchar2
 );
 
 PROCEDURE QuitarUnionAuge(
-dsc_probsalud in varchar2,
-dsc_rama in varchar2,
-dsc_famrama in varchar2,
-cod_pres in varchar2,
-arancel in number,
-edad in varchar2,
-sexo in varchar2,
-frecuencia in varchar2,
-excluyentes in varchar2
-);
+ dsc_probsalud in varchar2,
+  cod_ps_gen in number,
+  cod_ps in number,
+  cod_ps_aux in number,  
+  cod_rama in number,
+  dsc_famrama in varchar2,
+  cod_familia in number,
+  cod_pres in varchar2,
+  arancel in number,
+  edad in varchar2,
+  sexo in varchar2,
+  frecuencia in varchar2,
+  excluyentes in varchar2
+  );
 
-END NCAT_PCK_UNION;
+END NCAT_PCK_UNION; 
 /
 

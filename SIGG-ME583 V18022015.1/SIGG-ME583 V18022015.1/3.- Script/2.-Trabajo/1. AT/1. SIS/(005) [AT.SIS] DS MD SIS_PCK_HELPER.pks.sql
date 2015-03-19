@@ -29,17 +29,26 @@ function Split(
     p_list varchar2,
     p_del varchar2 := ','
     ) return split_tbl pipelined;
-    
+
     function Split3
     (
-    p_list varchar2    
+    p_list varchar2
     ) return split_tbl pipelined;
+    
+    FUNCTION is_number (p_string IN VARCHAR2)
+    RETURN boolean;
+    
+    function compare(
+    p_string1 in varchar2,
+    p_string2 in varchar2,
+    p_approx in boolean
+    ) return boolean;
 
     PROCEDURE ResetSeq(
       t_Name  IN VARCHAR2,
       p_name IN VARCHAR2
-      );
+    );    
 
-END SIS_PCK_HELPER;
+END SIS_PCK_HELPER; 
 /
 

@@ -1,0 +1,65 @@
+1;1;49;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1B;;3005003;243760;;;1 Mes;
+2;1;17;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1B;;3005003;243760;;;1 Mes;
+3;1;49;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1C;;3005104;476790;;;1 Mes;
+4;1;17;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1C;;3005104;476790;;;1 Mes;
+5;1;49;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1D;;3005105;541640;;;1 Mes;
+6;1;17;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1D;;3005105;541640;;;1 Mes;
+7;1;49;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1E;;3005106;421400;;;1 Mes;
+8;1;17;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 1E;;3005106;421400;;;1 Mes;
+9;1;49;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 2A;;3005103;290310;;;1 Mes;
+10;1;17;;Insuficiencia Renal Crónica Terminal;;DROGA INMUNOSUPRESORA PROTOCOLO 2A;;3005103;290310;;;1 Mes;
+11;2;62;;Cardiopatías Congénitas Operables;;CONFIRMACION  CARDIOPATIA CONGENITA OPERABLE PRE NATAL;-26;3111001;109650;< (menor que) 18    ;;1 Vida;3111002
+12;2;62;;Cardiopatías Congénitas Operables;;CONFIRMACION  CARDIOPATIA CONGENITA OPERABLE POST NATAL;-25;3111002;99770;< (menor que) 18    ;;1 Año;3111001
+13;2;62;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MAYOR;-14;1703061;9472110;< (menor que) 18    ;;2 Año;
+14;2;62;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MEDIANA;-15;1703062;4643520;< (menor que) 18    ;;2 Año;
+15;2;62;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MENOR;-16;1703063;3838970;< (menor que) 18    ;;2 Año;
+16;2;62;;Cardiopatías Congénitas Operables;;CIRUGIA CEC MAYOR ALTA COMPLEJIDAD PEDIATRICA;-17;1703261;13574010;< (menor que) 18    ;;2 Año;
+17;2;62;;Cardiopatías Congénitas Operables;;ESTUDIO HEMODINAMICO;-76;1701011;602500;< (menor que) 18    ;;1 Mes;
+18;2;62;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701043;1937660;< (menor que) 18    ;;2 Año;,1701131,1701144
+19;2;62;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701131;1937660;< (menor que) 18    ;;2 Año;,1701043,1701144
+20;2;62;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701144;1937660;< (menor que) 18    ;;2 Año;,1701043,1701131
+21;2;62;;Cardiopatías Congénitas Operables;;VALVULOPLASTIA;-279;1701141;1457540;< (menor que) 18    ;;2 Año;1701142
+22;2;62;;Cardiopatías Congénitas Operables;;VALVULOPLASTIA;-279;1701142;1457540;< (menor que) 18    ;;2 Año;1701141
+23;2;62;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703047;1028340;< (menor que) 18    ;;2 Año;,1703049,170305,1703054,1703055
+24;2;62;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703049;1028340;< (menor que) 18    ;;2 Año;,1703047,170305,1703054,1703055
+25;2;62;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703050;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,1703054,1703055
+26;2;62;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703054;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,170305,1703055
+27;2;62;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703055;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,170305,1703054
+28;2;62;;Cardiopatías Congénitas Operables;;CIRUGIA URGENCIA PEDIATRICA SIN CEC;-22;1703150;2569630;< (menor que) 18    ;;2 Año;
+29;2;62;;Cardiopatías Congénitas Operables;;CIERRE PERCUTANEO DEL DUCTOS ARTERIOSO PERSISTENTE;-13;2501124;2165330;< (menor que) 18    ;;1 Año;
+30;2;62;;Cardiopatías Congénitas Operables;;CIERRE DE DUCTOS POR CIRUGIA;-11;1703051;943390;< (menor que) 18    ;;1 Año;
+31;2;62;;Cardiopatías Congénitas Operables;;CIERRE DE DUCTOS POR CIRUGIA PREMATUROS;-12;1703151;1442710;< (menor que) 18    ;;1 Año;
+32;2;62;;Cardiopatías Congénitas Operables;;CIERRE PERCUTANEO DE DEFECTOS CEPTALES INTRACARDIACOS CON DISPOSITIVO;-10;1703163;5644330;< (menor que) 18    ;;1 Año;
+33;2;62;;Cardiopatías Congénitas Operables;;RECAMBIO MARCAPASO;-460;1703148;1817650;< (menor que) 18    ;;1 Año;
+34;2;62;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO DE ARRITMIAS;-422;1701046;677120;< (menor que) 18    ;; ;
+35;2;62;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO Y ABLACION DE ARRITMIAS;-423;1701050;1352290;< (menor que) 18    ;; ;
+36;2;62;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO Y ABLACION DE ARRITMIAS;-423;1701051;1352290;< (menor que) 18    ;; ;
+37;2;62;;Cardiopatías Congénitas Operables;;IMPLANTACION DE MARCAPASO UNICAMERAL VVI;-519;1703153;1677190;< (menor que) 18    ;;1 Año;,1703253,1703148
+38;2;62;;Cardiopatías Congénitas Operables;;IMPLANTACION DE MARCAPASO BICAMERAL DDD;-520;1703253;2167450;< (menor que) 18    ;;1 Año;,1703153,1703148
+39;2;62;;Cardiopatías Congénitas Operables;;EVALUACION POST QUIRURGICA CARDIOPATIA CONGENITA OPERABLES;-171;3111003;110530;< (menor que) 18    ;;1 Año;
+40;2;9;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MAYOR;-14;1703061;9472110;< (menor que) 18    ;;2 Año;
+41;2;9;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MEDIANA;-15;1703062;4643520;< (menor que) 18    ;;2 Año;
+42;2;9;;Cardiopatías Congénitas Operables;;CIRUGIA  CEC MENOR;-16;1703063;3838970;< (menor que) 18    ;;2 Año;
+43;2;9;;Cardiopatías Congénitas Operables;;CIRUGIA CEC MAYOR ALTA COMPLEJIDAD PEDIATRICA;-17;1703261;13574010;< (menor que) 18    ;;2 Año;
+44;2;9;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701043;1937660;< (menor que) 18    ;;2 Año;,1701131,1701144
+45;2;9;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701131;1937660;< (menor que) 18    ;;2 Año;,1701043,1701144
+46;2;9;;Cardiopatías Congénitas Operables;;ANGIOPLASTIA EN NIÑOS ( INCLUYE STENT);-4;1701144;1937660;< (menor que) 18    ;;2 Año;,1701043,1701131
+47;2;9;;Cardiopatías Congénitas Operables;;VALVULOPLASTIA;-279;1701141;1457540;< (menor que) 18    ;;2 Año;1701142
+48;2;9;;Cardiopatías Congénitas Operables;;VALVULOPLASTIA;-279;1701142;1457540;< (menor que) 18    ;;2 Año;1701141
+49;2;9;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703047;1028340;< (menor que) 18    ;;2 Año;,1703049,170305,1703054,1703055
+50;2;9;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703049;1028340;< (menor que) 18    ;;2 Año;,1703047,170305,1703054,1703055
+51;2;9;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703050;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,1703054,1703055
+52;2;9;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703054;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,170305,1703055
+53;2;9;;Cardiopatías Congénitas Operables;;OTRAS CIRUGIAS CARDIACAS SIN CEC;-139;1703055;1028340;< (menor que) 18    ;;2 Año;,1703047,1703049,170305,1703054
+54;2;9;;Cardiopatías Congénitas Operables;;CIRUGIA URGENCIA PEDIATRICA SIN CEC;-22;1703150;2569630;< (menor que) 18    ;;2 Año;
+55;2;9;;Cardiopatías Congénitas Operables;;CIERRE PERCUTANEO DEL DUCTOS ARTERIOSO PERSISTENTE;-13;2501124;2165330;< (menor que) 18    ;;1 Año;
+56;2;9;;Cardiopatías Congénitas Operables;;CIERRE DE DUCTOS POR CIRUGIA;-11;1703051;943390;< (menor que) 18    ;;1 Año;
+57;2;9;;Cardiopatías Congénitas Operables;;CIERRE DE DUCTOS POR CIRUGIA PREMATUROS;-12;1703151;1442710;< (menor que) 18    ;;1 Año;
+58;2;9;;Cardiopatías Congénitas Operables;;CIERRE PERCUTANEO DE DEFECTOS CEPTALES INTRACARDIACOS CON DISPOSITIVO;-10;1703163;5644330;< (menor que) 18    ;;1 Año;
+59;2;9;;Cardiopatías Congénitas Operables;;RECAMBIO MARCAPASO;-460;1703148;1817650;< (menor que) 18    ;;1 Año;
+60;2;9;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO DE ARRITMIAS;-422;1701046;677120;< (menor que) 18    ;; ;
+61;2;9;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO Y ABLACION DE ARRITMIAS;-423;1701050;1352290;< (menor que) 18    ;; ;
+62;2;9;;Cardiopatías Congénitas Operables;;ESTUDIO ELECTROFISIOLOGICO Y ABLACION DE ARRITMIAS;-423;1701051;1352290;< (menor que) 18    ;; ;
+63;2;9;;Cardiopatías Congénitas Operables;;IMPLANTACION DE MARCAPASO UNICAMERAL VVI;-519;1703153;1677190;< (menor que) 18    ;;1 Año;,1703253,1703148
+64;2;9;;Cardiopatías Congénitas Operables;;IMPLANTACION DE MARCAPASO BICAMERAL DDD;-520;1703253;2167450;< (menor que) 18    ;;1 Año;,1703153,1703148
+65;2;9;;Cardiopatías Congénitas Operables;;EVALUACION POST QUIRURGICA CARDIOPATIA CONGENITA OPERABLES;-171;3111003;110530;< (menor que) 18    ;;1 Año;
