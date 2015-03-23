@@ -1,5 +1,5 @@
 
-SQL*Loader: Release 11.2.0.1.0 - Production on Mié Mar 18 11:48:22 2015
+SQL*Loader: Release 11.2.0.1.0 - Production on Lun Mar 23 17:47:17 2015
 
 Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
@@ -18,7 +18,7 @@ Continuación:    ninguno especificado
 Ruta de acceso utilizada:      Convencional
 
 Tabla SIS.INPUTBUFFER, cargada de cada registro lógico.
-Opción INSERT activa para esta tabla: INSERT
+Opción INSERT activa para esta tabla: REPLACE
 Opción TRAILING NULLCOLS activada
 
    Nombre Columna               Posición   Long  Term Entorno Tipo de Dato
@@ -45,8 +45,8 @@ Total de registros lógicos leídos:          10
 Total de registros lógicos rechazados:         0
 Total de registros lógicos desechados:        0
 
-La ejecución empezó en Mié Mar 18 11:48:22 2015
-La ejecución terminó en Mié Mar 18 11:48:22 2015
+La ejecución empezó en Lun Mar 23 17:47:17 2015
+La ejecución terminó en Lun Mar 23 17:47:17 2015
 
-Tiempo transcurrido:     00:00:00.19
+Tiempo transcurrido:     00:00:00.14
 Tiempo de CPU:         00:00:00.06

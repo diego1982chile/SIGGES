@@ -53,6 +53,11 @@ function Split(
     t_name in varchar2,
     pk in number
     ) return varchar2;    
+    
+  FUNCTION Existe(
+  tabla in varchar2,
+  clave in varchar2
+  ) return number;    
 
 END SIS_PCK_HELPER; 
 /

@@ -38,6 +38,11 @@ fecha date;
   clave5 in date
   ) RETURN number;
   
+ FUNCTION ExistePara(  
+  clave1 in varchar2,
+  clave2 in date  
+  ) RETURN number;  
+  
   PROCEDURE ParametrizarEventos;
   
   PROCEDURE VueltaAtras;
@@ -45,13 +50,15 @@ fecha date;
   PROCEDURE AgregarEventoCaso(
   v_pk_rama in number,
   v_pk_garoporpat in number,  
-  cods_pres in varchar2  
+  cods_pres in varchar2,
+  cods_espe in varchar2    
   );
   
   PROCEDURE QuitarEventoCaso(
   v_pk_rama in number,
   v_pk_garoporpat in number,  
-  cods_pres in varchar2  
+  cods_pres in varchar2,
+  cods_espe in varchar2      
   );  
 
 END SIS_PCK_EVEGAROPAT; 

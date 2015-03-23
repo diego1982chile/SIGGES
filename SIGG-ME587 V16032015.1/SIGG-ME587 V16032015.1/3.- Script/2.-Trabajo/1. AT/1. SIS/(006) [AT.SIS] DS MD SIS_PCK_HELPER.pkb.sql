@@ -3,7 +3,7 @@ INSERT INTO sis.SIS_TAB_CONTROL_SCRIPT
 VALUES ( 
  'Diego Soto', 
  '(006) [AT.SIS] DS MD SIS_PCK_HELPER.pkb', 
- 'CreaciÃ³n de definiciÃ³n de package SIS_PCK_HELPER',  
+ 'Creación de definición de package SIS_PCK_HELPER',  
   SYSDATE, 
   'SIGG-ME587'); 
   
@@ -206,6 +206,46 @@ glosa varchar2(150):='';
 begin
     EXECUTE IMMEDIATE 'SELECT upper(trim('||split(t_Name)||'_dsc_'||split(t_Name)||')) from '||t_Name||' where '||split(t_Name)||'_cod_'||split(t_Name)||'='||pk into glosa;
 end getGlosa;
+
+  FUNCTION Existe(
+  tabla in varchar2,
+  clave in varchar2
+  ) RETURN number IS
+  v_pk number(12):=null;
+  BEGIN
+
+    case tabla
+        when 'genero' then
+            /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
+                for c1 in ( select g.GENERO_COD_GENERO pk
+                                from sis_tab_genero g
+                                where upper(trim(g.GENERO_DSC_NOMBRE))=upper(trim(clave)) )
+                 loop
+                    v_pk := c1.pk;
+                    exit; -- only care about one record, so exit.
+                end loop;
+        when 'period' then
+            /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
+                for c1 in ( select p.PERIOD_COD_PERIOD pk
+                                from sis_tab_period p
+                                where convert(upper(trim(p.PERIOD_DSC_UNIDAD)),'US7ASCII')=convert(upper(trim(clave)),'US7ASCII') )
+                 loop
+                    v_pk := c1.pk;
+                    exit; -- only care about one record, so exit.
+                end loop;
+        when 'especialidad' then
+            /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
+                for c1 in ( select e.ESPECIALIDAD_COD_ESPECIALIDAD pk
+                                from sis_tab_especialidad e
+                                where convert(upper(trim(e.ESPECIALIDAD_COD_CODCLIENTE)),'US7ASCII')=convert(upper(trim(clave)),'US7ASCII') )
+                 loop
+                    v_pk := c1.pk;
+                    exit; -- only care about one record, so exit.
+                end loop;                
+    end case;
+
+    return v_pk;
+  END;
 
 END SIS_PCK_HELPER; 
 /

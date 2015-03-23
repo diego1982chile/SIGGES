@@ -4,12 +4,13 @@ load data
  fields terminated by ";" 
  TRAILING NULLCOLS
 (ID,
+ COD_PS_GEN,
  COD_PS,
  COD_PS_AUX,
  PROBLSALUD, 
- COD_RAMA
+ COD_RAMA,
  FAMRAMA, 
  COD_FAMILIA,
  PRESTACION, 
- ARANCEL,
+ ARANCEL
  )

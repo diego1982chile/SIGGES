@@ -1,5 +1,5 @@
 
-SQL*Loader: Release 11.2.0.1.0 - Production on Mar Mar 10 18:59:58 2015
+SQL*Loader: Release 11.2.0.1.0 - Production on Vie Mar 20 10:24:14 2015
 
 Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
@@ -18,12 +18,13 @@ Continuación:    ninguno especificado
 Ruta de acceso utilizada:      Convencional
 
 Tabla SIS.INPUTBUFFER, cargada de cada registro lógico.
-Opción INSERT activa para esta tabla: INSERT
+Opción INSERT activa para esta tabla: REPLACE
 Opción TRAILING NULLCOLS activada
 
    Nombre Columna               Posición   Long  Term Entorno Tipo de Dato
 ------------------------------ ---------- ----- ---- ---- ---------------------
 ID                                  FIRST     *   ;       CHARACTER            
+COD_PS_GEN                           NEXT     *   ;       CHARACTER            
 COD_PS                               NEXT     *   ;       CHARACTER            
 COD_PS_AUX                           NEXT     *   ;       CHARACTER            
 PROBLSALUD                           NEXT     *   ;       CHARACTER            
@@ -44,7 +45,7 @@ Tabla SIS.INPUTBUFFER:
   0 Filas no cargada porque todos los campos eran nulos.
 
 
-Espacio asignado a matriz de enlace:           148608 bytes (64 filas)
+Espacio asignado a matriz de enlace:           165120 bytes (64 filas)
 Bytes de buffer de lectura: 1048576
 
 Total de registros lógicos ignorados:          0
@@ -52,8 +53,8 @@ Total de registros lógicos leídos:         911
 Total de registros lógicos rechazados:         1
 Total de registros lógicos desechados:        0
 
-La ejecución empezó en Mar Mar 10 18:59:58 2015
-La ejecución terminó en Mar Mar 10 18:59:58 2015
+La ejecución empezó en Vie Mar 20 10:24:14 2015
+La ejecución terminó en Vie Mar 20 10:24:14 2015
 
-Tiempo transcurrido:     00:00:00.69
+Tiempo transcurrido:     00:00:00.36
 Tiempo de CPU:         00:00:00.05

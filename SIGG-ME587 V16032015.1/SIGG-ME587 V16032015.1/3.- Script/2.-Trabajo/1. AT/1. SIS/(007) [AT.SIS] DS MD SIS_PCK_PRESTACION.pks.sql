@@ -45,7 +45,7 @@ v_pk_valoriza number(12);
   FUNCTION Existe(
   tabla in varchar2,
   clave in varchar2
-  ) return number;
+  ) return number;  
 
   FUNCTION Existe(
   tabla in varchar2,

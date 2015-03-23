@@ -20,6 +20,25 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
    1.0        16-03-2015             1. Created this package.
 ******************************************************************************/   
 
+ FUNCTION ExistePara(  
+  clave1 in varchar2,
+  clave2 in date  
+  ) RETURN number IS
+  v_pk number(12):=null;
+  BEGIN
+
+    /* Seleccionar la rama más reciente según vigencia, usando como clave de búsqueda la glosa dada */
+     for c1 in ( select p.PARA_COD_PARA pk from sis.sis_tab_para p
+                 where p.PARA_DSC_NOMBRE=clave1
+                 and p.PARA_FEC_VIGE=clave2 )
+     loop
+            v_pk := c1.pk;
+            exit; -- only care about one record, so exit.
+      end loop; 
+
+    return v_pk;
+  END;
+
  FUNCTION ExisteEvegaropat(  
   clave1 in number,
   clave2 in number,
@@ -51,7 +70,9 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
     anyo number(5):=EXTRACT(YEAR FROM sysdate);        
 
     probsalud_nulo exception;
+    go_nulo exception;
     prestacion_nulo exception;
+    especialidad_nulo exception;
     cruce_vacio exception;
 
     v_data number(12);
@@ -77,7 +98,8 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
         --SIS_PCK_HELPER.RESETSEQ('SIS_TAB_EVEGAROPAR','SIS_SEQ_EVEGAROPAR');                  
         SIS_PCK_HELPER.RESETSEQ('SIS_TAB_ALERTACITFUEPO','SIS_SEQ_ALERTACITFUEPO');  
 
-         for c in ( select IB.PROBLSALUD probsalud, IB.DSC_GO go, IB.EXCLUYENTES cods_ps from SIS.INPUTBUFFER ib order by IB.ID )
+         for c in ( select IB.PROBLSALUD probsalud, IB.DSC_GO go, IB.EXCLUYENTES cods_pres, ib.ESPECIALIDADES cods_espe 
+                    from SIS.INPUTBUFFER ib order by IB.ID )
          
             loop
             
@@ -87,11 +109,19 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
             
                 if(c.probsalud is null) then
                     raise probsalud_nulo;
-                end if;
+                end if;               
                 
-                if(c.cods_ps is null) then
+                if(c.go is null) then
+                    raise go_nulo;
+                end if;                
+                
+                if(c.cods_pres is null) then
                     raise prestacion_nulo;
                 end if;
+                
+                if(c.cods_espe is null) then
+                    raise especialidad_nulo;
+                end if;                
  
                for c2 in ( select r.RAMA_COD_RAMA pk_rama, gpp.GAROPORPAT_COD_GAROPORPAT pk_garoporpat from sis.sis_tab_garoporpat gpp 
                           inner join sis.sis_tab_rama r
@@ -102,7 +132,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                           and convert(upper(trim(gpp.GAROPORPAT_DSC_GAROPORPAT)),'US7ASCII')=convert(upper(trim(c.go)),'US7ASCII')  )  
                 loop         
                     vacio:=false;                    
-                    AgregarEventoCaso(c2.pk_rama, c2.pk_garoporpat, c.cods_ps);
+                    AgregarEventoCaso(c2.pk_rama, c2.pk_garoporpat, c.cods_pres, c.cods_espe);
                 end loop;
                          
                 if(vacio) then
@@ -135,6 +165,13 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_codlog  := 1;
                 v_dsc_log := 'El parámetro "probsalud" es null. Revisar archivo .csv';
                 Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
+            when go_nulo then
+                rollback;
+                v_codora  := 0;
+                v_msgora  := 'Excepción';
+                v_codlog  := 1;
+                v_dsc_log := 'El parámetro "go" es null. Revisar archivo .csv';
+                Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);                
             when prestacion_nulo then
                 rollback;
                 v_codora  := 0;
@@ -142,6 +179,13 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_codlog  := 1;
                 v_dsc_log := 'El parámetro "prestacion" es null. Revisar archivo .csv';
                 Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
+            when especialidad_nulo then
+                rollback;
+                v_codora  := 0;
+                v_msgora  := 'Excepción';
+                v_codlog  := 1;
+                v_dsc_log := 'El parámetro "especialidades" es null. Revisar archivo .csv';
+                Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);   
             when cruce_vacio then
                 rollback;
                 v_codora  := 0;
@@ -165,7 +209,9 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
     anyo number(5):=EXTRACT(YEAR FROM sysdate);        
 
     probsalud_nulo exception;
+    go_nulo exception;
     prestacion_nulo exception;
+    especialidad_nulo exception;
     cruce_vacio exception;
 
     v_data number(12);
@@ -185,7 +231,8 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
         --Chequear que la tabla inputbuffer tenga data
         SELECT 1 into v_data  FROM sis.inputbuffer WHERE ROWNUM=1;
 
-         for c in ( select IB.PROBLSALUD probsalud, IB.DSC_GO go, IB.EXCLUYENTES cods_ps from SIS.INPUTBUFFER ib order by IB.ID )
+         for c in ( select IB.PROBLSALUD probsalud, IB.DSC_GO go, IB.EXCLUYENTES cods_pres, ib.ESPECIALIDADES cods_espe 
+                    from SIS.INPUTBUFFER ib order by IB.ID )
             loop
             
                 vacio:=true;    
@@ -196,9 +243,17 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                     raise probsalud_nulo;
                 end if;
                 
-                if(c.cods_ps is null) then
+                if(c.go is null) then
+                    raise go_nulo;
+                end if;                
+                
+                if(c.cods_pres is null) then
                     raise prestacion_nulo;
                 end if;
+                
+                if(c.cods_espe is null) then
+                    raise especialidad_nulo;
+                end if;                
  
                for c2 in ( select r.RAMA_COD_RAMA pk_rama, gpp.GAROPORPAT_COD_GAROPORPAT pk_garoporpat from sis.sis_tab_garoporpat gpp 
                           inner join sis.sis_tab_rama r
@@ -209,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                           and convert(upper(trim(gpp.GAROPORPAT_DSC_GAROPORPAT)),'US7ASCII')=convert(upper(trim(c.go)),'US7ASCII')  )  
                 loop         
                     vacio:=false;                    
-                    QuitarEventoCaso(c2.pk_rama, c2.pk_garoporpat, c.cods_ps);
+                    QuitarEventoCaso(c2.pk_rama, c2.pk_garoporpat, c.cods_pres, c.cods_pres);
                 end loop;
                          
                 if(vacio) then
@@ -248,6 +303,13 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_codlog  := 1;
                 v_dsc_log := 'El parámetro "probsalud" es null. Revisar archivo .csv';
                 Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
+            when go_nulo then
+                rollback;
+                v_codora  := 0;
+                v_msgora  := 'Excepción';
+                v_codlog  := 1;
+                v_dsc_log := 'El parámetro "go" es null. Revisar archivo .csv';
+                Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);                
             when prestacion_nulo then
                 rollback;
                 v_codora  := 0;
@@ -255,6 +317,13 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_codlog  := 1;
                 v_dsc_log := 'El parámetro "prestacion" es null. Revisar archivo .csv';
                 Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);
+            when especialidad_nulo then
+                rollback;
+                v_codora  := 0;
+                v_msgora  := 'Excepción';
+                v_codlog  := 1;
+                v_dsc_log := 'El parámetro "especialidades" es null. Revisar archivo .csv';
+                Sis.Sis_Pro_Log (v_nomproc, v_codlog, v_Codora, v_msgora, v_dsc_log,out_error);                
             when cruce_vacio then
                 rollback;
                 v_codora  := 0;
@@ -274,13 +343,16 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
   PROCEDURE AgregarEventoCaso(    
   v_pk_rama in number,
   v_pk_garoporpat in number,
-  cods_pres in varchar2  
+  cods_pres in varchar2,
+  cods_espe in varchar2      
   )IS
     v_pk_para number(12);
     v_pk_evegaropat number(12);
     v_pk_evegaropar number(12);
     v_pk_alertacitfuepo number(12);
     v_pk_pres number(12);
+    v_pk_espe number(12);
+    
     p_cod_docu number(12):=10;
     p_tip_eve number(12):=2;         
 
@@ -291,47 +363,69 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
     v_evegaropat_clo_fecha clob;
     
     p_duenogo number(1):=2;
+    especialidades varchar2(250):='';
     
     prestacion_inexistente exception;
+    especialidad_inexistente exception;    
 
     BEGIN
-                   
-        select sis.sis_seq_para.nextval into v_pk_para from dual;
+                           
         select sis.sis_seq_evegaropat.nextval into v_pk_evegaropat from dual;
         --select sis.sis_seq_evegaropar.nextval into v_pk_evegaropar from dual;
-
-        insert into sis.sis_tab_para(para_cod_para, para_dsc_nombre, para_dsc_valor, para_dsc_para, para_fec_vige, para_fec_vcto, tippar_cod_tippar)
-        select v_pk_para, v_nom_para, to_char(fecha,'DD/MM/YYYY'), v_nom_para, fecha, null, 1 from dual
-        where not exists (select v_pk_para, v_nom_para, to_char(fecha,'DD/MM/YYYY'), v_nom_para, fecha, null, 1 from sis.sis_tab_para p 
-                          where p.PARA_DSC_NOMBRE=v_nom_para );           
+        
+        v_pk_para:=ExistePara(v_nom_para, fecha);
+        
+        if(v_pk_para is null) then
+            select sis.sis_seq_para.nextval into v_pk_para from dual;
+            insert into sis.sis_tab_para(para_cod_para, para_dsc_nombre, para_dsc_valor, para_dsc_para, para_fec_vige, para_fec_vcto, tippar_cod_tippar)
+            values (v_pk_para, v_nom_para, to_char(fecha,'DD/MM/YYYY'), v_nom_para, fecha, null, 1);
+        end if;                           
+                          
+        -- Parametrizas especialidades  
+        for c in (select rownum num_param, column_value param from table(SIS.SIS_PCK_HELPER.SPLIT2(cods_espe,',')) )            
+            loop        
+                v_pk_espe:=sis.sis_pck_helper.Existe('especialidad', c.param);
+                if(v_pk_espe is not null) then
+                    especialidades:=especialidades||v_pk_espe||',';
+                else
+                    raise especialidad_inexistente;                                                                
+                end if;
+            end loop; 
+            
+        especialidades:=substr(especialidades,1,length(especialidades)-1);                                                                                
 
         v_evegaropat_clo_sql:=to_clob(
-           'select   --GO_1895
-             NVL(SUM(1),0)
-           FROM  sis_tab_docu_10,
-                 sis_tab_docu_4
-           WHERE (sis_tab_docu_10.docu_10_col_5101 = [:5101])
-           AND (sis_tab_docu_4.docu_4_col_2076 = sis_tab_docu_10.docu_4_col_2076)
-           AND (sis_tab_docu_10.DOCU_10_COL_6024 IN (1002,1082))
-           AND EXISTS ( SELECT  1
-                        FROM sis_tab_alertacitfuepo
-                        WHERE sis_tab_alertacitfuepo.EVEGAROPAT_COD_EVEGAROPAT = '||v_pk_evegaropat||'
-                        AND sis_tab_alertacitfuepo.PRESTACION_COD_PRESTACION = sis_tab_docu_10.docu_10_col_5103
-                        AND SYSDATE BETWEEN sis_tab_alertacitfuepo.ALERTACITFUEPO_FEC_VIGE
-                        AND NVL(sis_tab_alertacitfuepo.ALERTACITFUEPO_FEC_VCTO,SYSDATE+1))
-                        AND (Sis_Fun_Sel_Caso_Es_Fue_Rama(SIS_TAB_DOCU_4.docu_4_col_2074,'||v_pk_rama||') = 1) AND
-                        (SIS_TAB_DOCU_10.docu_10_col_5105 >= to_date(replace(sis_fun_get_parametro('||v_pk_para||'),"/","-"), "dd-mm-rrrr"))'
-                                    );                                                                
+       'select   --GO_'||v_pk_evegaropat||'
+        NVL(SUM(1),0)
+        FROM  sis_tab_docu_10,
+        sis_tab_docu_4,
+        SIS_TAB_REGESTINSDOC R
+        WHERE (sis_tab_docu_10.docu_10_col_5101 = [:5101]) and
+        (sis_tab_docu_4.docu_4_col_2076 = sis_tab_docu_10.docu_4_col_2076) AND
+        (R.REGESTINSDOC_NUM_VALORPK=SIS_TAB_DOCU_4.DOCU_4_COL_2076 ) AND
+        (R.CAMP_COD_CAMP=2076) AND
+        (R.TIPESTVIGINSDOC_COD_TIPESTVIGI=1) AND
+        (R.TIPESTVALINSDOC_COD_TIPESTVALI IN (1,2)) AND
+        (R.REGESTINSDOC_FEC_VCTO IS NULL) AND
+        (sis_tab_docu_10.DOCU_10_COL_6024 IN ('||especialidades||'))
+        AND EXISTS ( SELECT  1
+        FROM sis_tab_alertacitfuepo
+        WHERE sis_tab_alertacitfuepo.EVEGAROPAT_COD_EVEGAROPAT = '||v_pk_evegaropat||'
+        AND sis_tab_alertacitfuepo.PRESTACION_COD_PRESTACION = sis_tab_docu_10.docu_10_col_5103
+        AND SYSDATE BETWEEN sis_tab_alertacitfuepo.ALERTACITFUEPO_FEC_VIGE
+        AND NVL(sis_tab_alertacitfuepo.ALERTACITFUEPO_FEC_VCTO,SYSDATE+1))
+        AND (SIS_TAB_DOCU_10.docu_10_col_5105 >= to_date(replace(sis_fun_get_parametro('||v_pk_para||'),'''||'/'||''','''||'-'||'''),'''||'dd-mm-rrrr'||''''||'))'                                
+        );                                                                
 
         v_evegaropat_clo_fecha:=to_clob(
-        'SELECT --GO_1895
-               TO_DATE(TO_CHAR(SIS_TAB_DOCU_10.docu_10_col_5105,"dd/mm/yyyy")||" "||NVL(SIS_TAB_DOCU_10.docu_10_col_6020,"00:00")||":00","dd/mm/yyyy hh24:mi:ss"),
-               NULL
-         FROM  SIS_TAB_DOCU_4,
-               SIS_TAB_DOCU_10
-         WHERE (SIS_TAB_DOCU_10.DOCU_10_COL_5101 = [:5101]) AND -- PK.
-               (SIS_TAB_DOCU_4.DOCU_4_COL_2076 = SIS_TAB_DOCU_10.DOCU_4_COL_2076)'
-                                );  
+       'SELECT --GO_'||v_pk_evegaropat||'
+        TO_DATE(TO_CHAR(SIS_TAB_DOCU_10.docu_10_col_5105,'''||'dd/mm/yyyy'||''')||'||''''||' '||''''||'||NVL(SIS_TAB_DOCU_10.docu_10_col_6020,'''||'00:00'||''')||'''||':00'||''''||','''||'dd/mm/yyyy hh24:mi:ss'||''''||'),
+        NULL
+        FROM  SIS_TAB_DOCU_4,
+              SIS_TAB_DOCU_10
+        WHERE (SIS_TAB_DOCU_10.DOCU_10_COL_5101 = [:5101]) AND -- PK.
+              (SIS_TAB_DOCU_4.DOCU_4_COL_2076 = SIS_TAB_DOCU_10.DOCU_4_COL_2076)'
+        );  
                                                 
         insert into sis.sis_tab_evegaropat(evegaropat_cod_evegaropat, garoporpat_cod_garoporpat, evegaropat_clo_sql, evetra_cod_evetra, docu_cod_docu, 
                                            evegaropat_fec_vige, evegaropat_fec_vcto, tipevegaropat_cod_tipevegaropa, evegaropat_clo_fecha, evegaropat_cod_inicio,
@@ -350,8 +444,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
             insert into sis.sis_tab_evegaropar(evegaropar_cod_evegaropar, evegaropat_cod_evegaropat, camp_cod_camp)
             values (v_pk_evegaropat, v_pk_evegaropat, v_cod_camp ); 
                                      
-            for c in (select rownum num_param, column_value param from table(SIS.SIS_PCK_HELPER.SPLIT2(cods_pres,',')) )
-            
+            for c in (select rownum num_param, column_value param from table(SIS.SIS_PCK_HELPER.SPLIT2(cods_pres,',')) )            
                 loop        
                     v_pk_pres:=sis.sis_pck_prestacion.Existe('prestacion', c.param);
                     if(v_pk_pres is not null) then
@@ -371,7 +464,13 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_msgora  := 'Excepción';
                 v_codlog  := 1002;
                 v_dsc_log := 'prestación inexistente para código contenido en '||cods_pres;
-                raise;     
+                raise;   
+            when especialidad_inexistente then
+                v_codora  := 0;
+                v_msgora  := 'Excepción';
+                v_codlog  := 1018;
+                v_dsc_log := 'especialidad inexistente para código contenido en '||cods_espe;
+                raise;                       
             when others then
                 v_codora  := SQLCODE;
                 v_msgora  := SQLERRM;
@@ -383,7 +482,8 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
   PROCEDURE QuitarEventoCaso(    
   v_pk_rama in number,
   v_pk_garoporpat in number,
-  cods_pres in varchar2  
+  cods_pres in varchar2,
+  cods_espe in varchar2  
   ) IS
     v_pk_para number(12);
     v_pk_evegaropat number(12);
@@ -420,8 +520,7 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_EVEGAROPAT AS
                 v_dsc_log := 'Excepción inesperada';
                 raise;                                                                 
     end;
-                
-    
+                    
 END SIS_PCK_evegaropat; 
 /
 

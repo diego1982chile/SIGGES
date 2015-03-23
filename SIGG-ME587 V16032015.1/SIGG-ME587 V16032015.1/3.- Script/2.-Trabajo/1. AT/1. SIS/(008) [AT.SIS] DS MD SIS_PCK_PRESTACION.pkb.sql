@@ -80,24 +80,6 @@ CREATE OR REPLACE PACKAGE BODY SIS.SIS_PCK_PRESTACION AS
                     v_pk := c1.pk;
                     exit; -- only care about one record, so exit.
                 end loop;             
-        when 'genero' then
-            /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
-                for c1 in ( select g.GENERO_COD_GENERO pk
-                                from sis_tab_genero g
-                                where upper(trim(g.GENERO_DSC_NOMBRE))=upper(trim(clave)) )
-                 loop
-                    v_pk := c1.pk;
-                    exit; -- only care about one record, so exit.
-                end loop;
-        when 'period' then
-            /* Seleccionar la prestación más reciente según vigencia, usando como clave de búsqueda, el código de prestación dado */
-                for c1 in ( select p.PERIOD_COD_PERIOD pk
-                                from sis_tab_period p
-                                where convert(upper(trim(p.PERIOD_DSC_UNIDAD)),'US7ASCII')=convert(upper(trim(clave)),'US7ASCII') )
-                 loop
-                    v_pk := c1.pk;
-                    exit; -- only care about one record, so exit.
-                end loop;
         when 'famrama_famramapres' then
                 for c1 in ( select FAMRAMAPRES.FAMRAMAPRES_COD_FAMRAMAPRES pk  from sis_tab_famrama famrama inner join sis_tab_famramapres famramapres
                 on FAMRAMA.FAMRAMA_COD_FAMRAMA=FAMRAMAPRES.FAMRAMA_COD_FAMRAMA

@@ -1,5 +1,5 @@
 
-SQL*Loader: Release 11.2.0.1.0 - Production on Mié Mar 18 17:09:31 2015
+SQL*Loader: Release 11.2.0.1.0 - Production on Vie Mar 20 10:30:51 2015
 
 Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
@@ -53,8 +53,8 @@ Total de registros lógicos leídos:         911
 Total de registros lógicos rechazados:         1
 Total de registros lógicos desechados:        0
 
-La ejecución empezó en Mié Mar 18 17:09:31 2015
-La ejecución terminó en Mié Mar 18 17:09:32 2015
+La ejecución empezó en Vie Mar 20 10:30:51 2015
+La ejecución terminó en Vie Mar 20 10:30:51 2015
 
-Tiempo transcurrido:     00:00:00.24
-Tiempo de CPU:         00:00:00.09
+Tiempo transcurrido:     00:00:00.27
+Tiempo de CPU:         00:00:00.08
